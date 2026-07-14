@@ -114,8 +114,7 @@ export function plan(siteDir, repo, event, ref, { force = false } = {}) {
   // had been promoted there), instead of starting fresh. Once a repo has a
   // genuine release, this no longer applies -- its own version bumps are
   // its own responsibility from then on, same as `cleanupForeignVersionsIfFirstRelease`.
-  const firstRelease = !hasGenuineRelease(siteDir, repo)
-  const version = firstRelease ? "0.0.1" : pkg.version
+  const version = hasGenuineRelease(siteDir, repo) ? pkg.version : "0.0.1"
   if (!version) throw new Error("package.json has no version")
   const versionDir = join(siteDir, `v${version}`)
   const exists = isGenuineRelease(versionDir, repo)
