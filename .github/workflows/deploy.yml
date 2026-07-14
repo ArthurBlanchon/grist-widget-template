@@ -5,12 +5,19 @@ name: Deploy widget to GitHub Pages
 #     /<repo>/v<version>/ + mutable /<repo>/latest/.
 #     Rebuilt only when package.json's version has no v<version> dir yet, so
 #     re-pushing main without a version bump is a no-op deploy.
-#     A push that *creates* the main ref (github.event.created) -- fired by
-#     GitHub's "Use this template" copying this repo onto a brand-new ref --
-#     is skipped entirely instead: it would otherwise publish whatever
-#     boilerplate version package.json happens to have checked in and
-#     permanently spend the first-release override before anyone's done
-#     real work.
+#     A push that *creates* the main ref, authored by GitHub's own web-flow
+#     bot -- fired by "Use this template" copying this repo onto a brand-new
+#     ref -- is skipped entirely instead: it would otherwise publish
+#     whatever boilerplate version package.json happens to have checked in
+#     and permanently spend the first-release override before anyone's done
+#     real work. (Checking github.event.created alone isn't enough: a CLI
+#     scaffold's own first `git push -u origin main` also creates that ref
+#     for the first time, but is a real user's genuine first release and
+#     must not be skipped -- the web-flow committer check tells the two
+#     apart.) That skipped run still clears any foreign content the copy
+#     brought along (stray v<version>/ dirs, a root/latest/ still pointing
+#     at the source repo's own path) via `cleanup-foreign`, so root/latest/
+#     aren't left blank until the widget's real first release.
 #   - push to dev                    -> dev channel: mutable /<repo>/dev/
 #     with version.json + a self-reload snippet, for live review inside Grist.
 #
@@ -98,7 +105,7 @@ jobs:
             --event "${{ github.event_name }}" \
             --ref "${{ github.ref }}" \
             ${{ github.event.inputs.force == 'true' && '--force' || '' }} \
-            ${{ github.event.created == true && '--created' || '' }})
+            ${{ github.event.created == true && github.event.head_commit.committer.email == 'noreply@github.com' && '--created' || '' }})
           echo "Plan: $PLAN"
           node -e '
             const p = JSON.parse(process.argv[1]);
@@ -106,6 +113,7 @@ jobs:
             const out = process.env.GITHUB_OUTPUT;
             fs.appendFileSync(out, `context=${p.context}\n`);
             fs.appendFileSync(out, `skip=${p.skip ? "true" : "false"}\n`);
+            fs.appendFileSync(out, `reason=${p.reason || ""}\n`);
             fs.appendFileSync(out, `version=${p.version || ""}\n`);
             fs.appendFileSync(out, `base=${p.base}\n`);
             fs.appendFileSync(out, `firstRelease=${p.firstRelease ? "true" : "false"}\n`);
@@ -130,8 +138,18 @@ jobs:
             --sha "$SHA" --ref "${{ github.ref }}"
 
       - name: Skip (already published)
-        if: steps.plan.outputs.skip == 'true'
+        if: steps.plan.outputs.skip == 'true' && steps.plan.outputs.reason != 'ref-created'
         run: echo "== skip — v${{ steps.plan.outputs.version }} already published"
+
+      # The ref-created push never reaches Build/Place, so it's the only
+      # path where cleanupForeignVersionsIfFirstRelease (normally a side
+      # effect of Place) needs to run standalone -- otherwise foreign
+      # content from "Use this template" (stray v<version>/ dirs, a
+      # root/latest/ pointing at the source repo's own path) sits untouched
+      # until the widget's real first release.
+      - name: Clean foreign content (ref-created push published nothing)
+        if: steps.plan.outputs.reason == 'ref-created'
+        run: node scripts/deploy.mjs cleanup-foreign --site site --repo "$REPO_NAME"
 
       - name: Finalize (versions.json + commit + push)
         run: |

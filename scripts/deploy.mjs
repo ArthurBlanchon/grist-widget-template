@@ -23,13 +23,22 @@
 //     Prints JSON { context: "release"|"dev", version?, base, skip }.
 //     Release is skipped when v<version> already exists on gh-pages
 //     (idempotence: re-pushing main without a version bump is a no-op).
-//     --created (github.event.created off a push event) additionally skips
-//     unconditionally, without consuming the first-release version override
-//     -- see plan()'s own comment.
+//     --created additionally skips unconditionally, without consuming the
+//     first-release version override -- see plan()'s own comment. Callers
+//     must only pass --created for GitHub's own server-side "Use this
+//     template" push, never a real user push that merely happens to create
+//     a ref for the first time (e.g. a CLI scaffold's first `git push -u
+//     origin main`) -- see deploy.yml's wiring for the distinguishing check.
 //
 //   place    --site <dir> --repo <name> --channel <release|dev>
 //            [--version <v>] --dist <dir> --sha <sha> [--ref <ref>]
 //     Copies a freshly built dist into the gh-pages tree.
+//
+//   cleanup-foreign --site <dir> --repo <name>
+//     Standalone entry point for `cleanupForeignVersionsIfFirstRelease` --
+//     used on a skipped ref-created push (see `plan`), which never reaches
+//     `place` (the only other caller of this cleanup) so foreign content
+//     from "Use this template" would otherwise sit untouched indefinitely.
 //
 //   remove   --site <dir>
 //     Removes dev/ from the gh-pages tree (retire the dev URL when the `dev`
@@ -237,21 +246,28 @@ function replaceDir(dest, srcDist) {
 
 /**
  * If this repo has never genuinely published a release before (no
- * v<version>/ directory whose showcase-meta.json matches this repo), any
- * v<version>/ directories present are provably inherited noise -- e.g. from
- * copying this template repo including its gh-pages branch (GitHub's "Use
- * this template" -> "Include all branches"). Safe to clear them all before
- * placing this repo's actual first release: there is no ambiguity, since a
- * repo with zero genuine releases can't have any of its own history to lose.
- * Never touches dev/, latest/, or site-root files. Once a genuine release
- * exists for this repo, buildVersionsManifest is non-empty and this is
- * permanently a no-op.
+ * v<version>/ directory whose showcase-meta.json matches this repo), *every*
+ * top-level entry except `dev/` (the mutable dev channel, legitimately this
+ * repo's own regardless of release history) and a small set of
+ * pipeline-managed files is provably inherited noise -- e.g. from copying
+ * this template repo including its gh-pages branch (GitHub's "Use this
+ * template" -> "Include all branches"): stray `v<version>/` directories,
+ * but also a root `index.html`/`latest/` still referencing the *source*
+ * repo's own base path (found live: a fresh copy's root and `latest/`
+ * pointed at `/grist-widget-template/v0.2.22/assets/...`, 404ing on this
+ * repo's own Pages site -- a blank page -- because the ref-created push
+ * that used to overwrite them with this repo's own build is now skipped
+ * entirely, see `plan()`). Safe to clear unconditionally: a repo with zero
+ * genuine releases can't have any of its own history to lose. Once a
+ * genuine release exists for this repo, buildVersionsManifest is non-empty
+ * and this is permanently a no-op.
  */
 export function cleanupForeignVersionsIfFirstRelease(siteDir, repo) {
   if (hasGenuineRelease(siteDir, repo)) return { cleaned: [] }
+  const PROTECTED = new Set([".nojekyll", "dev", "versions.json", ".git"])
   const cleaned = []
   for (const name of existsSync(siteDir) ? readdirSync(siteDir) : []) {
-    if (!/^v\d+\.\d+\.\d+/.test(name)) continue
+    if (PROTECTED.has(name)) continue
     rmSync(join(siteDir, name), { recursive: true, force: true })
     cleaned.push(name)
   }
@@ -430,6 +446,11 @@ function main() {
     case "remove": {
       const res = removeDevDir(args.site)
       console.log("remove:", JSON.stringify(res))
+      break
+    }
+    case "cleanup-foreign": {
+      const res = cleanupForeignVersionsIfFirstRelease(args.site, args.repo)
+      console.log("cleanup-foreign:", JSON.stringify(res))
       break
     }
     case "finalize": {
