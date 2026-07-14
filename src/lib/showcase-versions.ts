@@ -1,21 +1,35 @@
 import { useEffect, useState } from "react"
 
+import { parseShowcasePath } from "@/lib/showcase-routing"
+
 // Shared by the showcase hub (TemplateLanding) and the per-channel notice
-// (ChannelNotice) -- both need the same released-version list, fetched from
-// a fixed absolute URL rather than a path relative to wherever this happens
-// to be deployed (see src/components/template-landing.tsx for why).
-export const VERSIONS_URL =
-  "https://arthurblanchon.github.io/grist-widget-sdk/template/versions.json"
-export const DEV_URL = "https://arthurblanchon.github.io/grist-widget-sdk/template/dev/"
-export const HUB_URL = "https://arthurblanchon.github.io/grist-widget-sdk/template/"
+// (ChannelNotice) -- both need the same released-version list. URLs are
+// root-relative to wherever THIS deploy actually lives (derived from
+// window.location.pathname via parseShowcasePath's hubPath), not hardcoded
+// to the grist-widget-sdk monorepo's own showcase: a real scaffolded
+// widget has its own versions.json and its own v<version>/ + dev/ dirs,
+// and previously showed the monorepo's version history and links instead
+// of its own (found live on a real scaffold's landing page).
+function hubPath(): string {
+  const path = parseShowcasePath(window.location.pathname).hubPath
+  return path.endsWith("/") ? path : `${path}/`
+}
 
 export type ReleasedVersion = {
   version: string
   publishedAt: string
 }
 
+export function versionsUrl(): string {
+  return `${hubPath()}versions.json`
+}
+
+export function devUrl(): string {
+  return `${hubPath()}dev/`
+}
+
 export function versionUrl(version: string): string {
-  return `https://arthurblanchon.github.io/grist-widget-sdk/template/v${version}/`
+  return `${hubPath()}v${version}/`
 }
 
 export function useVersions() {
@@ -24,7 +38,7 @@ export function useVersions() {
 
   useEffect(() => {
     let cancelled = false
-    fetch(VERSIONS_URL, { cache: "no-store" })
+    fetch(versionsUrl(), { cache: "no-store" })
       .then((res) => (res.ok ? res.json() : Promise.reject(res)))
       .then((data: ReleasedVersion[]) => {
         if (!cancelled) setVersions(data)

@@ -1,5 +1,5 @@
 {
-  "name": "grist-widget-template-scaffold",
+  "name": "grist-widget-template",
   "private": true,
   "version": "0.0.1",
   "type": "module",
