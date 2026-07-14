@@ -101,6 +101,7 @@ jobs:
             fs.appendFileSync(out, `skip=${p.skip ? "true" : "false"}\n`);
             fs.appendFileSync(out, `version=${p.version || ""}\n`);
             fs.appendFileSync(out, `base=${p.base}\n`);
+            fs.appendFileSync(out, `firstRelease=${p.firstRelease ? "true" : "false"}\n`);
           ' "$PLAN"
 
       - name: Build
@@ -134,6 +135,18 @@ jobs:
           node scripts/deploy.mjs finalize \
             --site site --repo "$REPO_NAME" $UPDATE_VERSIONS --push \
             --commit-message "deploy: ${{ steps.plan.outputs.context }} @ ${{ github.sha }}"
+
+      # On this repo's first genuine release only: prune every branch except
+      # main/dev/gh-pages, and reset dev to main's current tip. Establishes
+      # the schema every widget should start from (main == dev, gh-pages is
+      # CI-managed only) regardless of how the repo was created -- a CLI
+      # scaffold already satisfies this trivially; a repo copied via GitHub's
+      # "Use this template" often doesn't (a stray inherited branch, or dev
+      # tracking the source template's own unrelated preview history).
+      # Placed after Finalize so it never runs if the release itself failed.
+      - name: Reset branches on first genuine release
+        if: steps.plan.outputs.context == 'release' && steps.plan.outputs.firstRelease == 'true'
+        run: node scripts/deploy.mjs reset-branches
 
   cleanup:
     # When the `dev` branch is deleted, remove /dev/ so the dev URL retires
