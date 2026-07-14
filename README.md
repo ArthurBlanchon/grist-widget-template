@@ -91,13 +91,16 @@ automatically.
 > it doesn't run any of the CLI's own setup (renaming `package.json`,
 > titles, etc.), and it won't reset `package.json`'s `version` back to a
 > fresh `0.0.1` for you. Do both by hand before your first real release.
-> Also **never manually seed/copy `gh-pages` content** from another repo
-> (e.g. to get Pages showing something immediately) — each `v<version>/`
-> is only recognized as a genuine prior release if it carries a
+> If you also checked **"Include all branches"** (to get `gh-pages`/Pages
+> already set up, no manual Settings step), your first real release
+> automatically clears out every leftover `v<version>/` it finds — a
+> `v<version>/` only counts as a genuine prior release once it carries a
 > `showcase-meta.json` naming *this* repo (written by this pipeline's own
-> `place` step); anything else is treated as unpublished and safely
-> rebuilt over, but it's simpler to just let the workflow create
-> `gh-pages` itself (it does, as an orphan branch, on its first real run).
+> `place` step), so on a repo with no genuine releases yet, everything
+> else is provably inherited noise and gets safely wiped on your first
+> push to `main`. That cleanup only ever runs before your *first* genuine
+> release — once one exists, it's permanently a no-op, so it's still safest
+> to never manually re-seed `gh-pages` again after that point.
 
 **One-time setup** (the workflow can't do this part for you):
 

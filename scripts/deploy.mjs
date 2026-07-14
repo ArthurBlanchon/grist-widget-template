@@ -177,6 +177,29 @@ function replaceDir(dest, srcDist) {
   cpSync(srcDist, dest, { recursive: true })
 }
 
+/**
+ * If this repo has never genuinely published a release before (no
+ * v<version>/ directory whose showcase-meta.json matches this repo), any
+ * v<version>/ directories present are provably inherited noise -- e.g. from
+ * copying this template repo including its gh-pages branch (GitHub's "Use
+ * this template" -> "Include all branches"). Safe to clear them all before
+ * placing this repo's actual first release: there is no ambiguity, since a
+ * repo with zero genuine releases can't have any of its own history to lose.
+ * Never touches dev/, latest/, or site-root files. Once a genuine release
+ * exists for this repo, buildVersionsManifest is non-empty and this is
+ * permanently a no-op.
+ */
+export function cleanupForeignVersionsIfFirstRelease(siteDir, repo) {
+  if (buildVersionsManifest(siteDir, repo).length > 0) return { cleaned: [] }
+  const cleaned = []
+  for (const name of existsSync(siteDir) ? readdirSync(siteDir) : []) {
+    if (!/^v\d+\.\d+\.\d+/.test(name)) continue
+    rmSync(join(siteDir, name), { recursive: true, force: true })
+    cleaned.push(name)
+  }
+  return { cleaned }
+}
+
 /** Place a freshly built dist into the gh-pages tree. */
 export function placeTarget({ siteDir, channel, version, distDir, sha, ref, repo }) {
   if (!existsSync(distDir)) throw new Error(`dist not found: ${distDir}`)
@@ -202,6 +225,7 @@ export function placeTarget({ siteDir, channel, version, distDir, sha, ref, repo
   // exactly like latest/ reusing it: the asset URLs it references (under
   // v<version>/assets/) already exist from the versionDir placement above,
   // so nothing 404s.
+  cleanupForeignVersionsIfFirstRelease(siteDir, repo)
   const versionDir = join(siteDir, `v${version}`)
   replaceDir(versionDir, distDir)
   writeFileSync(
