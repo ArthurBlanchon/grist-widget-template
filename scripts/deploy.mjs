@@ -151,6 +151,12 @@ export function selfReloadSnippet(sha) {
       }
     } catch (e) { /* transient offline / 404 during publish: keep polling */ }
   }
+  check(); // don't wait a full POLL_MS for the first check -- a plain
+           // (non-cache-busted) request for this very page can hit a stale
+           // CDN-cached index.html referencing JS assets a newer deploy
+           // already deleted, producing a blank/black screen until this
+           // fires; found live, waiting the full interval left that
+           // black screen up for ~5s on a fresh visit.
   setInterval(check, POLL_MS);
 })();
 </script>`
