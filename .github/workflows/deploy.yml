@@ -132,7 +132,7 @@ jobs:
             UPDATE_VERSIONS="--update-versions"
           fi
           node scripts/deploy.mjs finalize \
-            --site site $UPDATE_VERSIONS --push \
+            --site site --repo "$REPO_NAME" $UPDATE_VERSIONS --push \
             --commit-message "deploy: ${{ steps.plan.outputs.context }} @ ${{ github.sha }}"
 
   cleanup:
