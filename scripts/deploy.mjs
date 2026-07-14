@@ -35,6 +35,11 @@
 //   finalize --site <dir> [--update-versions] [--push] [--commit-message <msg>]
 //     Regenerates versions.json (release runs only) and commits + pushes the
 //     gh-pages tree with a rebase-and-retry loop.
+//
+//   reset-branches [--repo-dir <dir>]
+//     On a repo's first genuine release only (caller gates on plan()'s
+//     firstRelease): prunes every branch except main/dev/gh-pages and
+//     force-resets dev to main's current tip.
 
 import {
   existsSync,
@@ -109,7 +114,8 @@ export function plan(siteDir, repo, event, ref, { force = false } = {}) {
   // had been promoted there), instead of starting fresh. Once a repo has a
   // genuine release, this no longer applies -- its own version bumps are
   // its own responsibility from then on, same as `cleanupForeignVersionsIfFirstRelease`.
-  const version = hasGenuineRelease(siteDir, repo) ? pkg.version : "0.0.1"
+  const firstRelease = !hasGenuineRelease(siteDir, repo)
+  const version = firstRelease ? "0.0.1" : pkg.version
   if (!version) throw new Error("package.json has no version")
   const versionDir = join(siteDir, `v${version}`)
   const exists = isGenuineRelease(versionDir, repo)
@@ -119,6 +125,10 @@ export function plan(siteDir, repo, event, ref, { force = false } = {}) {
     base: basePathFor(repo, "release", version),
     skip: exists && !force,
     reason: exists ? (force ? "force-rebuild" : "already-published") : "new-version",
+    // Exposed so the workflow can gate a one-time repo cleanup (prune stray
+    // branches, reset dev to main) on exactly this signal -- see
+    // `resetBranchesIfFirstRelease`.
+    firstRelease,
   }
 }
 
@@ -314,6 +324,34 @@ export function finalize({ siteDir, updateVersions, push, commitMessage, remoteB
   throw lastErr
 }
 
+/**
+ * Establish the schema every widget repo should start from -- `main` and
+ * `dev` identical, `gh-pages` managed by CI only -- by pruning every other
+ * branch and force-resetting `dev` to `main`'s current tip (the commit
+ * already checked out at `repoDir`). Runs once, gated by the caller on
+ * `plan()`'s `firstRelease` flag, so it applies equally to a CLI scaffold
+ * (already satisfies this trivially -- nothing to prune, dev already equals
+ * main) and a repo copied via GitHub's "Use this template" (may have a
+ * stray inherited branch, or `dev` tracking the source template's own
+ * unrelated preview history). Operates on `repoDir`, the repo's own
+ * checkout -- a different directory than the gh-pages `siteDir` every other
+ * function here works with.
+ */
+export function resetBranchesIfFirstRelease(repoDir, keep = ["main", "dev", "gh-pages"]) {
+  const raw = git(["ls-remote", "--heads", "origin"], repoDir)
+  const branches = raw
+    ? raw.split("\n").map((line) => line.split("refs/heads/")[1]).filter(Boolean)
+    : []
+  const deletedBranches = []
+  for (const b of branches) {
+    if (keep.includes(b)) continue
+    git(["push", "origin", "--delete", b], repoDir)
+    deletedBranches.push(b)
+  }
+  git(["push", "--force", "origin", "HEAD:refs/heads/dev"], repoDir)
+  return { deletedBranches, devReset: true }
+}
+
 // ----------------------------------------------------------------------------
 // CLI
 // ----------------------------------------------------------------------------
@@ -369,6 +407,11 @@ function main() {
         repo: args.repo,
       })
       console.log("finalize:", JSON.stringify(res))
+      break
+    }
+    case "reset-branches": {
+      const res = resetBranchesIfFirstRelease(args["repo-dir"] || ".")
+      console.log("reset-branches:", JSON.stringify(res))
       break
     }
     default:

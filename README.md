@@ -102,9 +102,15 @@ automatically.
 > carries a `showcase-meta.json` naming *this* repo (written by this
 > pipeline's own `place` step), so on a repo with no genuine releases yet,
 > everything else is provably inherited noise and gets safely wiped on your
-> first push to `main`. Both of these only ever apply before your *first*
-> genuine release — once one exists, they're permanently a no-op, so it's
-> still safest to never manually re-seed `gh-pages` again after that point.
+> first push to `main`. Also on that same first release, every branch
+> except `main`, `dev`, and `gh-pages` gets pruned, and `dev` gets
+> force-reset to match `main`'s tip — a fresh widget always starts from
+> `main == dev`, regardless of whether it came from the CLI (already true)
+> or a template copy (may have inherited a stray branch, or a `dev` full of
+> the source template's own unrelated preview history). All three of these
+> only ever apply before your *first* genuine release — once one exists,
+> they're permanently a no-op, so it's still safest to never manually
+> re-seed `gh-pages` again after that point.
 
 **One-time setup** (the workflow can't do this part for you):
 
