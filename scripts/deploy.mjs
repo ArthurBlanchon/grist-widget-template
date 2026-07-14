@@ -8,6 +8,8 @@
 //   release (push to main / workflow_dispatch)
 //     - immutable  /<repo>/v<version>/   (built once, never overwritten)
 //     - mutable    /<repo>/latest/       (alias to newest release)
+//     - /<repo>/versions.json            (released-version index, newest first
+//                                        -- read by the showcase hub/notice)
 //
 //   dev (push to dev)
 //     - mutable    /<repo>/dev/          (+ version.json + self-reload)
@@ -30,10 +32,19 @@
 //     Removes dev/ from the gh-pages tree (retire the dev URL when the `dev`
 //     branch is deleted). Never touches a release or latest/.
 //
-//   finalize --site <dir> [--push] [--commit-message <msg>]
-//     Commits + pushes the gh-pages tree with a rebase-and-retry loop.
+//   finalize --site <dir> [--update-versions] [--push] [--commit-message <msg>]
+//     Regenerates versions.json (release runs only) and commits + pushes the
+//     gh-pages tree with a rebase-and-retry loop.
 
-import { existsSync, readFileSync, writeFileSync, rmSync, mkdirSync, cpSync } from "node:fs"
+import {
+  existsSync,
+  readFileSync,
+  readdirSync,
+  writeFileSync,
+  rmSync,
+  mkdirSync,
+  cpSync,
+} from "node:fs"
 import { join, dirname } from "node:path"
 import { execFileSync } from "node:child_process"
 
@@ -107,6 +118,28 @@ export function injectSelfReload(html, sha) {
   return out + snippet
 }
 
+/**
+ * Scan siteDir for previously-released v<version>/showcase-meta.json files
+ * and assemble the versions.json manifest, newest first. Read by the
+ * showcase hub (TemplateLanding) and per-channel notice (ChannelNotice) to
+ * show this widget's own release history -- not the grist-widget-sdk
+ * monorepo's (found live: every scaffolded widget's version index showed
+ * the monorepo's versions instead of its own, since showcase-versions.ts
+ * used to hardcode that URL).
+ */
+export function buildVersionsManifest(siteDir) {
+  const entries = []
+  for (const name of existsSync(siteDir) ? readdirSync(siteDir) : []) {
+    if (!/^v\d+\.\d+\.\d+/.test(name)) continue
+    const metaPath = join(siteDir, name, "showcase-meta.json")
+    if (!existsSync(metaPath)) continue
+    const meta = JSON.parse(readFileSync(metaPath, "utf8"))
+    entries.push({ version: meta.version, publishedAt: meta.publishedAt })
+  }
+  entries.sort((a, b) => new Date(b.publishedAt) - new Date(a.publishedAt))
+  return entries
+}
+
 // ----------------------------------------------------------------------------
 // Filesystem / git effects
 // ----------------------------------------------------------------------------
@@ -144,6 +177,10 @@ export function placeTarget({ siteDir, channel, version, distDir, sha, ref }) {
   // so nothing 404s.
   const versionDir = join(siteDir, `v${version}`)
   replaceDir(versionDir, distDir)
+  writeFileSync(
+    join(versionDir, "showcase-meta.json"),
+    JSON.stringify({ version, publishedAt: new Date().toISOString(), sha }, null, 2) + "\n",
+  )
   const latestDir = join(siteDir, "latest")
   replaceDir(latestDir, distDir)
   mkdirSync(siteDir, { recursive: true })
@@ -173,8 +210,12 @@ function sleep(ms) {
   while (Date.now() < end) {}
 }
 
-/** Commit + push the gh-pages tree with a rebase-and-retry loop. */
-export function finalize({ siteDir, push, commitMessage, remoteBranch = "gh-pages" }) {
+/** Regenerate versions.json (release runs only), then commit + push with rebase-retry. */
+export function finalize({ siteDir, updateVersions, push, commitMessage, remoteBranch = "gh-pages" }) {
+  if (updateVersions) {
+    const versions = buildVersionsManifest(siteDir)
+    writeFileSync(join(siteDir, "versions.json"), JSON.stringify(versions, null, 2) + "\n")
+  }
   git(["add", "-A"], siteDir)
   const status = git(["status", "--porcelain"], siteDir)
   if (!status) {
@@ -253,6 +294,7 @@ function main() {
     case "finalize": {
       const res = finalize({
         siteDir: args.site,
+        updateVersions: !!args["update-versions"],
         push: !!args.push,
         commitMessage: args["commit-message"],
       })

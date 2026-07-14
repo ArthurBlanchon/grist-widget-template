@@ -125,10 +125,14 @@ jobs:
         if: steps.plan.outputs.skip == 'true'
         run: echo "== skip — v${{ steps.plan.outputs.version }} already published"
 
-      - name: Finalize (commit + push)
+      - name: Finalize (versions.json + commit + push)
         run: |
+          UPDATE_VERSIONS=""
+          if [ "${{ steps.plan.outputs.context }}" = "release" ]; then
+            UPDATE_VERSIONS="--update-versions"
+          fi
           node scripts/deploy.mjs finalize \
-            --site site --push \
+            --site site $UPDATE_VERSIONS --push \
             --commit-message "deploy: ${{ steps.plan.outputs.context }} @ ${{ github.sha }}"
 
   cleanup:

@@ -2,7 +2,7 @@ import { useState } from "react"
 
 import { Button } from "@/components/ui/button"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
-import { DEV_URL, formatDate, useVersions, versionUrl } from "@/lib/showcase-versions"
+import { devUrl, formatDate, useVersions, versionUrl } from "@/lib/showcase-versions"
 
 // The showcase "hub" page: rendered whenever this deploy's URL has no
 // recognized channel suffix (see src/lib/showcase-routing.ts) -- this repo's
@@ -178,7 +178,7 @@ git push origin dev`}</code>
             Released template versions
           </h2>
           <a
-            href={DEV_URL}
+            href={devUrl()}
             className="text-sm text-muted-foreground underline underline-offset-4 hover:text-foreground"
           >
             Live dev preview →

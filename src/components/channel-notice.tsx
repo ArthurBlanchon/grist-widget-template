@@ -10,7 +10,7 @@ import {
 } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
 import { channelLabel, type Channel } from "@/lib/showcase-routing"
-import { DEV_URL, useVersions, versionUrl } from "@/lib/showcase-versions"
+import { devUrl, useVersions, versionUrl } from "@/lib/showcase-versions"
 import { cn } from "@/lib/utils"
 
 // Shown instead of the widget tree on a specific channel build
@@ -44,7 +44,7 @@ function VersionChips({ current }: { current: Channel }) {
           latest
         </a>
       )}
-      <a href={DEV_URL} className={chipClass(current.kind === "dev")}>
+      <a href={devUrl()} className={chipClass(current.kind === "dev")}>
         dev
       </a>
       {versions?.map((v) => (

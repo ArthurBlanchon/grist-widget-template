@@ -1,4 +1,4 @@
-# grist-widget-template-scaffold
+# grist-widget-template
 
 Base template to build a Grist widget with `grist-widget-sdk`.
 
