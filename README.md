@@ -114,10 +114,15 @@ automatically.
 >
 > "Use this template" also immediately fires this workflow once on its own,
 > the moment the repo is created — before you've cloned it, let alone
-> changed anything. That run is recognized (GitHub marks it as the push
-> that *created* the `main` ref) and skipped entirely: nothing gets
-> published, and it doesn't count as your first release, so the `0.0.1`
-> override above still applies in full once you actually push real changes.
+> changed anything. That run is recognized (GitHub's own web-flow bot
+> creating the `main` ref) and skipped entirely: nothing gets published,
+> and it doesn't count as your first release, so the `0.0.1` override above
+> still applies in full once you actually push real changes. If you also
+> checked "Include all branches", that same skipped run still clears out
+> whatever foreign content came along with it — stray `v<version>/` dirs,
+> and a root/`latest/` still pointing at the *source* repo's own path
+> (which would otherwise render blank until your real first release) —
+> without needing to publish anything of its own to do so.
 
 **One-time setup** (the workflow can't do this part for you):
 
