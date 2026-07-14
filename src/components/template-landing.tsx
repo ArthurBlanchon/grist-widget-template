@@ -1,5 +1,6 @@
 import { useState } from "react"
 
+import { ScaffoldFooter } from "@/components/scaffold-footer"
 import { Button } from "@/components/ui/button"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { devUrl, formatDate, useVersions, versionUrl } from "@/lib/showcase-versions"
@@ -301,6 +302,8 @@ git push origin dev`}</code>
           </ul>
         )}
       </section>
+
+      <ScaffoldFooter />
     </div>
   )
 }

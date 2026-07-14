@@ -81,6 +81,16 @@ function isGenuineRelease(versionDir, repo) {
 }
 
 /**
+ * Whether this repo has ever genuinely published a release (a v<version>/
+ * dir whose showcase-meta.json names this repo). Shared by `plan()` (forces
+ * the first release to 0.0.1) and `cleanupForeignVersionsIfFirstRelease()`
+ * (clears inherited v<version>/ noise) -- both need the exact same signal.
+ */
+function hasGenuineRelease(siteDir, repo) {
+  return buildVersionsManifest(siteDir, repo).length > 0
+}
+
+/**
  * Build the release/dev plan from this repo's own package.json + the current
  * gh-pages tree. Release is skipped when its immutable v<version> dir was
  * genuinely published by this repo before (unless force), so re-pushing main
@@ -92,7 +102,14 @@ export function plan(siteDir, repo, event, ref, { force = false } = {}) {
     return { context: "dev", base: basePathFor(repo, "dev") }
   }
   const pkg = JSON.parse(readFileSync("package.json", "utf8"))
-  const version = pkg.version
+  // A repo's first genuine release always starts at 0.0.1, regardless of
+  // whatever package.json's version field says -- found live: a repo copied
+  // via GitHub's "Use this template" inherited "0.2.18" from the source
+  // template repo's own main branch (itself a canary-stamped scaffold that
+  // had been promoted there), instead of starting fresh. Once a repo has a
+  // genuine release, this no longer applies -- its own version bumps are
+  // its own responsibility from then on, same as `cleanupForeignVersionsIfFirstRelease`.
+  const version = hasGenuineRelease(siteDir, repo) ? pkg.version : "0.0.1"
   if (!version) throw new Error("package.json has no version")
   const versionDir = join(siteDir, `v${version}`)
   const exists = isGenuineRelease(versionDir, repo)
@@ -190,7 +207,7 @@ function replaceDir(dest, srcDist) {
  * permanently a no-op.
  */
 export function cleanupForeignVersionsIfFirstRelease(siteDir, repo) {
-  if (buildVersionsManifest(siteDir, repo).length > 0) return { cleaned: [] }
+  if (hasGenuineRelease(siteDir, repo)) return { cleaned: [] }
   const cleaned = []
   for (const name of existsSync(siteDir) ? readdirSync(siteDir) : []) {
     if (!/^v\d+\.\d+\.\d+/.test(name)) continue
