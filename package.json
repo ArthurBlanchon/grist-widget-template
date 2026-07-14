@@ -1,5 +1,5 @@
 {
-  "name": "grist-widget-template-dev",
+  "name": "grist-widget-template",
   "private": true,
   "version": "0.2.20",
   "type": "module",
