@@ -5,6 +5,12 @@ name: Deploy widget to GitHub Pages
 #     /<repo>/v<version>/ + mutable /<repo>/latest/.
 #     Rebuilt only when package.json's version has no v<version> dir yet, so
 #     re-pushing main without a version bump is a no-op deploy.
+#     A push that *creates* the main ref (github.event.created) -- fired by
+#     GitHub's "Use this template" copying this repo onto a brand-new ref --
+#     is skipped entirely instead: it would otherwise publish whatever
+#     boilerplate version package.json happens to have checked in and
+#     permanently spend the first-release override before anyone's done
+#     real work.
 #   - push to dev                    -> dev channel: mutable /<repo>/dev/
 #     with version.json + a self-reload snippet, for live review inside Grist.
 #
@@ -91,7 +97,8 @@ jobs:
             --site site --repo "$REPO_NAME" \
             --event "${{ github.event_name }}" \
             --ref "${{ github.ref }}" \
-            ${{ github.event.inputs.force == 'true' && '--force' || '' }})
+            ${{ github.event.inputs.force == 'true' && '--force' || '' }} \
+            ${{ github.event.created == true && '--created' || '' }})
           echo "Plan: $PLAN"
           node -e '
             const p = JSON.parse(process.argv[1]);
