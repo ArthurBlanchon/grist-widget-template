@@ -19,10 +19,13 @@
 //
 // Subcommands:
 //   plan     --site <dir> --repo <name> --event <push|workflow_dispatch>
-//            --ref <ref> [--force]
+//            --ref <ref> [--force] [--created]
 //     Prints JSON { context: "release"|"dev", version?, base, skip }.
 //     Release is skipped when v<version> already exists on gh-pages
 //     (idempotence: re-pushing main without a version bump is a no-op).
+//     --created (github.event.created off a push event) additionally skips
+//     unconditionally, without consuming the first-release version override
+//     -- see plan()'s own comment.
 //
 //   place    --site <dir> --repo <name> --channel <release|dev>
 //            [--version <v>] --dist <dir> --sha <sha> [--ref <ref>]
@@ -101,7 +104,7 @@ function hasGenuineRelease(siteDir, repo) {
  * genuinely published by this repo before (unless force), so re-pushing main
  * without a version bump is a no-op.
  */
-export function plan(siteDir, repo, event, ref, { force = false } = {}) {
+export function plan(siteDir, repo, event, ref, { force = false, created = false } = {}) {
   const isRelease = event === "workflow_dispatch" || ref === "refs/heads/main" || ref === "main"
   if (!isRelease) {
     return { context: "dev", base: basePathFor(repo, "dev") }
@@ -118,6 +121,28 @@ export function plan(siteDir, repo, event, ref, { force = false } = {}) {
   const version = firstRelease ? "0.0.1" : pkg.version
   if (!version) throw new Error("package.json has no version")
   const versionDir = join(siteDir, `v${version}`)
+  // GitHub's "Use this template" copies the source repo's main branch onto a
+  // brand-new ref, which fires this same push-to-main event itself --
+  // before anyone has done any real work. Without this check, that event
+  // would consume the first-release override above on whatever unmodified
+  // boilerplate happens to be checked in, so the widget's *actual* first
+  // release (once someone merges real content) no longer counts as
+  // firstRelease and publishes under that boilerplate's version verbatim
+  // instead of a clean 0.0.1 -- found live (a monorepo widget moved into its
+  // own repo this way published its real first release as "v0.2.21").
+  // Skipping this event entirely (never placing anything, never touching
+  // gh-pages) keeps hasGenuineRelease() false, so the override survives
+  // intact for whenever a real release actually happens.
+  if (created && event === "push") {
+    return {
+      context: "release",
+      version,
+      base: basePathFor(repo, "release", version),
+      skip: true,
+      reason: "ref-created",
+      firstRelease,
+    }
+  }
   const exists = isGenuineRelease(versionDir, repo)
   return {
     context: "release",
@@ -382,7 +407,10 @@ function main() {
 
   switch (cmd) {
     case "plan": {
-      const result = plan(args.site, args.repo, args.event, args.ref, { force: !!args.force })
+      const result = plan(args.site, args.repo, args.event, args.ref, {
+        force: !!args.force,
+        created: !!args.created,
+      })
       process.stdout.write(JSON.stringify(result))
       break
     }
