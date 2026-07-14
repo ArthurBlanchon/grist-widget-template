@@ -6,7 +6,7 @@ Base template to build a Grist widget with `grist-widget-sdk`.
 
 Opened outside a Grist iframe, `main.tsx` picks between two components purely by URL shape (`src/lib/showcase-routing.ts`, no router needed): a bare path with no recognized channel suffix renders `TemplateLanding` (its own hero, onboarding, and released-version index); `/latest/`, `/dev/`, or `/v<version>/` renders `ChannelNotice` instead — a distinct hero explaining which build this is, chips to jump to any other version/channel (`src/lib/showcase-versions.ts`), and a copy-this-URL helper for pasting into Grist's custom widget field.
 
-When actually embedded, `GristStatusChip` (`src/components/grist-status-chip.tsx`) shows a small pill with live handshake status — connecting, retrying with a countdown, connected, or unavailable — using `useGristHandshakeContext()` from `grist-widget-sdk/advanced` in its own `<GristHandshakeProvider>`. Safe to mount alongside `GristWidgetProvider`: both share the page's `ensureGristReady()` singleton (see `apps/docs/api/handshake.md`), so this is purely observational and never duplicates the real handshake.
+When actually embedded, `GristStatusChip` (`src/components/grist-status-chip.tsx`) shows a small pill with live handshake status — connecting, retrying with a countdown, connected, or unavailable — using `useAmbientGristHandshake()` from `grist-widget-sdk/advanced`. It must be mounted *inside* `GristWidgetProvider` (see `src/main.tsx`): it only observes that provider's own handshake manager and never mounts a second one, so it's purely observational and can never duplicate or race the real handshake (see `apps/docs/api/handshake.md`).
 
 `src/App.tsx` uses `useGrist<TaskRow, TaskMapped>()` for the selected row (`w.record`, `w.mode`) and remounts the UI with `key={rowKey}` when the row changes — same pattern as `widgets/create-email-draft`. See `src/grist-types.example.ts` for typing patterns.
 
@@ -85,6 +85,19 @@ After merging, keep committing to the same `dev` branch for your next round
 of changes — it's the permanent working/preview branch for this widget, not
 a one-off feature branch to delete and recreate. Deleting it retires `/dev/`
 automatically.
+
+> ⚠️ **Used GitHub's "Use this template" button instead of `npm create
+> grist-widget`?** That path copies this repo's default branch verbatim —
+> it doesn't run any of the CLI's own setup (renaming `package.json`,
+> titles, etc.), and it won't reset `package.json`'s `version` back to a
+> fresh `0.0.1` for you. Do both by hand before your first real release.
+> Also **never manually seed/copy `gh-pages` content** from another repo
+> (e.g. to get Pages showing something immediately) — each `v<version>/`
+> is only recognized as a genuine prior release if it carries a
+> `showcase-meta.json` naming *this* repo (written by this pipeline's own
+> `place` step); anything else is treated as unpublished and safely
+> rebuilt over, but it's simpler to just let the workflow create
+> `gh-pages` itself (it does, as an orphan branch, on its first real run).
 
 **One-time setup** (the workflow can't do this part for you):
 

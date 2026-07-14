@@ -59,9 +59,32 @@ export function basePathFor(repo, channel, version) {
 }
 
 /**
+ * Was `versionDir` actually published by *this* repo's own pipeline? Checks
+ * for a `showcase-meta.json` whose `repo` field matches -- not just that the
+ * directory exists. A `gh-pages` branch manually seeded from another repo's
+ * export (found live: a freshly-created widget repo's `gh-pages` already
+ * contained `v<version>/` directories copied from the template repo it came
+ * from, some with no meta file at all, one with a foreign `showcase-meta.json`
+ * whose `sha` didn't belong to this repo's own history) would otherwise look
+ * indistinguishable from a real prior release and get silently treated as
+ * "already published" forever, permanently squatting on that version path.
+ */
+function isGenuineRelease(versionDir, repo) {
+  const metaPath = join(versionDir, "showcase-meta.json")
+  if (!existsSync(metaPath)) return false
+  try {
+    const meta = JSON.parse(readFileSync(metaPath, "utf8"))
+    return meta.repo === repo
+  } catch {
+    return false
+  }
+}
+
+/**
  * Build the release/dev plan from this repo's own package.json + the current
- * gh-pages tree. Release is skipped when its immutable v<version> dir already
- * exists (unless force), so re-pushing main without a version bump is a no-op.
+ * gh-pages tree. Release is skipped when its immutable v<version> dir was
+ * genuinely published by this repo before (unless force), so re-pushing main
+ * without a version bump is a no-op.
  */
 export function plan(siteDir, repo, event, ref, { force = false } = {}) {
   const isRelease = event === "workflow_dispatch" || ref === "refs/heads/main" || ref === "main"
@@ -72,7 +95,7 @@ export function plan(siteDir, repo, event, ref, { force = false } = {}) {
   const version = pkg.version
   if (!version) throw new Error("package.json has no version")
   const versionDir = join(siteDir, `v${version}`)
-  const exists = existsSync(versionDir)
+  const exists = isGenuineRelease(versionDir, repo)
   return {
     context: "release",
     version,
@@ -125,15 +148,19 @@ export function injectSelfReload(html, sha) {
  * show this widget's own release history -- not the grist-widget-sdk
  * monorepo's (found live: every scaffolded widget's version index showed
  * the monorepo's versions instead of its own, since showcase-versions.ts
- * used to hardcode that URL).
+ * used to hardcode that URL). Entries whose meta has no `repo` field, or a
+ * `repo` that doesn't match this repo, are skipped -- a `gh-pages` branch
+ * manually seeded from another repo's export (found live) would otherwise
+ * leak that repo's own version history into this one's index.
  */
-export function buildVersionsManifest(siteDir) {
+export function buildVersionsManifest(siteDir, repo) {
   const entries = []
   for (const name of existsSync(siteDir) ? readdirSync(siteDir) : []) {
     if (!/^v\d+\.\d+\.\d+/.test(name)) continue
     const metaPath = join(siteDir, name, "showcase-meta.json")
     if (!existsSync(metaPath)) continue
     const meta = JSON.parse(readFileSync(metaPath, "utf8"))
+    if (meta.repo !== repo) continue
     entries.push({ version: meta.version, publishedAt: meta.publishedAt })
   }
   entries.sort((a, b) => new Date(b.publishedAt) - new Date(a.publishedAt))
@@ -151,7 +178,7 @@ function replaceDir(dest, srcDist) {
 }
 
 /** Place a freshly built dist into the gh-pages tree. */
-export function placeTarget({ siteDir, channel, version, distDir, sha, ref }) {
+export function placeTarget({ siteDir, channel, version, distDir, sha, ref, repo }) {
   if (!existsSync(distDir)) throw new Error(`dist not found: ${distDir}`)
   if (channel === "dev") {
     const devDir = join(siteDir, "dev")
@@ -179,7 +206,7 @@ export function placeTarget({ siteDir, channel, version, distDir, sha, ref }) {
   replaceDir(versionDir, distDir)
   writeFileSync(
     join(versionDir, "showcase-meta.json"),
-    JSON.stringify({ version, publishedAt: new Date().toISOString(), sha }, null, 2) + "\n",
+    JSON.stringify({ version, publishedAt: new Date().toISOString(), sha, repo }, null, 2) + "\n",
   )
   const latestDir = join(siteDir, "latest")
   replaceDir(latestDir, distDir)
@@ -211,9 +238,9 @@ function sleep(ms) {
 }
 
 /** Regenerate versions.json (release runs only), then commit + push with rebase-retry. */
-export function finalize({ siteDir, updateVersions, push, commitMessage, remoteBranch = "gh-pages" }) {
+export function finalize({ siteDir, updateVersions, push, commitMessage, remoteBranch = "gh-pages", repo }) {
   if (updateVersions) {
-    const versions = buildVersionsManifest(siteDir)
+    const versions = buildVersionsManifest(siteDir, repo)
     writeFileSync(join(siteDir, "versions.json"), JSON.stringify(versions, null, 2) + "\n")
   }
   git(["add", "-A"], siteDir)
@@ -282,6 +309,7 @@ function main() {
         distDir: args.dist,
         sha: args.sha,
         ref: args.ref,
+        repo: args.repo,
       })
       console.log("placed:", JSON.stringify(res))
       break
@@ -297,6 +325,7 @@ function main() {
         updateVersions: !!args["update-versions"],
         push: !!args.push,
         commitMessage: args["commit-message"],
+        repo: args.repo,
       })
       console.log("finalize:", JSON.stringify(res))
       break
