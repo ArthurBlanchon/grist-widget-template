@@ -15,7 +15,7 @@ export const GRIST_OPTIONS: UseGristOptions = {
 }
 
 export const WIDGET_METADATA = {
-  title: "Grist Widget Template Dev",
+  title: "Scaffold Dev",
   description:
     "Starter template for building Grist widgets with React and Vite.",
 } as const
