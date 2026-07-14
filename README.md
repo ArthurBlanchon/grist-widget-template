@@ -4,7 +4,7 @@ Base template to build a Grist widget with `grist-widget-sdk`.
 
 `src/main.tsx` wraps the app with `GristWidgetProvider`, `GristBoundary`, and `GristSdkAlerts`. The latter maps `getGristSdkAlertDescriptors()` from the SDK to shadcn `Alert` (`src/components/grist-sdk-alerts.tsx` + `src/components/ui/alert.tsx`); keep them in sync with the playground when you change alert styling.
 
-Opened outside a Grist iframe, `main.tsx` picks between two components purely by URL shape (`src/lib/showcase-routing.ts`, no router needed): a bare path with no recognized channel suffix renders `TemplateLanding` (its own hero, onboarding, and released-version index); `/latest/`, `/dev/`, or `/v<version>/` renders `ChannelNotice` instead — a distinct hero explaining which build this is, chips to jump to any other version/channel (`src/lib/showcase-versions.ts`), and a copy-this-URL helper for pasting into Grist's custom widget field.
+Opened outside a Grist iframe, `main.tsx` picks between two components purely by URL shape (`src/lib/showcase-routing.ts`, no router needed): a bare path with no recognized channel suffix renders `TemplateLanding` (its own hero, onboarding, and released-version index); `/latest/`, `/dev/`, or `/v<version>/` renders `ChannelNotice` instead — a distinct hero explaining which build this is, chips to jump to any other version/channel (`src/lib/showcase-versions.ts`), and a copy-this-URL helper for pasting into Grist's custom widget field. Both render `ScaffoldFooter` (`src/components/scaffold-footer.tsx`) at the bottom — a small, purely informational note ("Scaffolded from `create-grist-widget@X.Y.Z`") built from `package.json`'s `createGristWidgetVersion` field, which the CLI stamps on every real scaffold (`vite.config.ts` injects it as `__CREATE_GRIST_WIDGET_VERSION__`). Renders nothing if that field is absent, e.g. this pristine template source itself.
 
 When actually embedded, `GristStatusChip` (`src/components/grist-status-chip.tsx`) shows a small pill with live handshake status — connecting, retrying with a countdown, connected, or unavailable — using `useAmbientGristHandshake()` from `grist-widget-sdk/advanced`. It must be mounted *inside* `GristWidgetProvider` (see `src/main.tsx`): it only observes that provider's own handshake manager and never mounts a second one, so it's purely observational and can never duplicate or race the real handshake (see `apps/docs/api/handshake.md`).
 
@@ -89,18 +89,22 @@ automatically.
 > ⚠️ **Used GitHub's "Use this template" button instead of `npm create
 > grist-widget`?** That path copies this repo's default branch verbatim —
 > it doesn't run any of the CLI's own setup (renaming `package.json`,
-> titles, etc.), and it won't reset `package.json`'s `version` back to a
-> fresh `0.0.1` for you. Do both by hand before your first real release.
-> If you also checked **"Include all branches"** (to get `gh-pages`/Pages
-> already set up, no manual Settings step), your first real release
-> automatically clears out every leftover `v<version>/` it finds — a
-> `v<version>/` only counts as a genuine prior release once it carries a
-> `showcase-meta.json` naming *this* repo (written by this pipeline's own
-> `place` step), so on a repo with no genuine releases yet, everything
-> else is provably inherited noise and gets safely wiped on your first
-> push to `main`. That cleanup only ever runs before your *first* genuine
-> release — once one exists, it's permanently a no-op, so it's still safest
-> to never manually re-seed `gh-pages` again after that point.
+> titles, etc.), and whatever version happens to be checked into the
+> source repo's `package.json` (which can be well past `0.0.1` — see below)
+> comes along with it. You don't need to reset it by hand: your first real
+> release always resolves to `v0.0.1` regardless of what `package.json`
+> says, and that value stays untouched in the file — only the deploy
+> pipeline's own idea of "which version is this" is overridden, once, for
+> that first release. If you also checked **"Include all branches"** (to
+> get `gh-pages`/Pages already set up, no manual Settings step), your first
+> real release also automatically clears out every leftover `v<version>/`
+> it finds — a `v<version>/` only counts as a genuine prior release once it
+> carries a `showcase-meta.json` naming *this* repo (written by this
+> pipeline's own `place` step), so on a repo with no genuine releases yet,
+> everything else is provably inherited noise and gets safely wiped on your
+> first push to `main`. Both of these only ever apply before your *first*
+> genuine release — once one exists, they're permanently a no-op, so it's
+> still safest to never manually re-seed `gh-pages` again after that point.
 
 **One-time setup** (the workflow can't do this part for you):
 

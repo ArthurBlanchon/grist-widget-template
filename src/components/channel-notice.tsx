@@ -1,5 +1,6 @@
 import { useState } from "react"
 
+import { ScaffoldFooter } from "@/components/scaffold-footer"
 import { Button } from "@/components/ui/button"
 import {
   Card,
@@ -117,6 +118,8 @@ export function ChannelNotice({
       >
         ← Back to the template home
       </a>
+
+      <ScaffoldFooter />
     </div>
   )
 }
