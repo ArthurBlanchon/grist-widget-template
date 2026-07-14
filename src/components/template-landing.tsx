@@ -63,6 +63,28 @@ function CreateRepoButton() {
   )
 }
 
+// The fastest path: GitHub's own "generate from template" flow, with
+// history included so gh-pages/Pages content comes along -- no
+// create-grist-widget CLI, no local install. See the template README's
+// "Used GitHub's 'Use this template' button instead of `npm create
+// grist-widget`?" note for what this trades away (package.json rename,
+// version reset) in exchange for zero local setup.
+function CopyStarterRepoButton() {
+  return (
+    <div className="mt-2 ml-5">
+      <Button asChild>
+        <a
+          href="https://github.com/arthurblanchon/grist-widget-template/generate"
+          target="_blank"
+          rel="noreferrer"
+        >
+          Copy starter repo
+        </a>
+      </Button>
+    </div>
+  )
+}
+
 export function TemplateLanding() {
   const { versions, error } = useVersions()
 
@@ -84,7 +106,63 @@ export function TemplateLanding() {
 
       <div className="mb-10 rounded-lg border p-4">
         <h2 className="mb-3 font-heading text-base font-semibold">
-          Get started
+          Quickstart
+        </h2>
+        <ol className="list-inside list-decimal space-y-3 text-sm text-muted-foreground">
+          <li>
+            Copy this starter repo. On the next page, check{" "}
+            <strong className="text-foreground">Include all branches</strong>{" "}
+            so GitHub Pages comes already configured — no manual Settings
+            step.
+            <CopyStarterRepoButton />
+          </li>
+          <li>
+            Your new widget starts deploying on its first push. Ask your AI
+            coding agent for two URLs: the{" "}
+            <strong className="text-foreground">dev</strong> build (auto-reloads
+            as you iterate) and the{" "}
+            <strong className="text-foreground">latest</strong> build (ready to
+            paste into a production Grist document).
+          </li>
+        </ol>
+        <div className="mt-4 rounded-md border border-amber-500/40 bg-amber-500/10 p-3 text-xs text-muted-foreground">
+          <strong className="text-foreground">
+            If your AI can't see the new widget repo,
+          </strong>{" "}
+          check its GitHub App has been granted access to it:{" "}
+          <a
+            href="https://github.com/apps/claude"
+            target="_blank"
+            rel="noreferrer"
+            className="underline underline-offset-4 hover:text-foreground"
+          >
+            Claude
+          </a>
+          ,{" "}
+          <a
+            href="https://github.com/apps/chatgpt-codex-connector"
+            target="_blank"
+            rel="noreferrer"
+            className="underline underline-offset-4 hover:text-foreground"
+          >
+            Codex
+          </a>
+          , or{" "}
+          <a
+            href="https://github.com/apps/cursor"
+            target="_blank"
+            rel="noreferrer"
+            className="underline underline-offset-4 hover:text-foreground"
+          >
+            Cursor
+          </a>
+          .
+        </div>
+      </div>
+
+      <div className="mb-10 rounded-lg border p-4">
+        <h2 className="mb-3 font-heading text-base font-semibold">
+          Prefer the CLI?
         </h2>
         <Tabs defaultValue="claude-code">
           <TabsList className="mb-4">
