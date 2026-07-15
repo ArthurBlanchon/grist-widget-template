@@ -90,42 +90,32 @@ automatically.
 > grist-widget`?** That path copies this repo's default branch verbatim —
 > it doesn't run any of the CLI's own setup (renaming `package.json`,
 > titles, etc.), and whatever version happens to be checked into the
-> source repo's `package.json` (which can be well past `0.0.1` — see below)
-> comes along with it. You don't need to reset it by hand: your first real
+> source repo's `package.json` (which can be well past `0.0.1`) comes along
+> with it. **The moment the repo is created, GitHub's own initial push to
+> `main` fires this workflow and publishes a clean `v0.0.1`** — your first
 > release always resolves to `v0.0.1` regardless of what `package.json`
-> says, and that value stays untouched in the file — only the deploy
-> pipeline's own idea of "which version is this" is overridden, once, for
-> that first release. If you also checked **"Include all branches"** (to
-> get `gh-pages`/Pages already set up, no manual Settings step), your first
-> real release also automatically clears out every leftover `v<version>/`
-> it finds — a `v<version>/` only counts as a genuine prior release once it
-> carries a `showcase-meta.json` naming *this* repo (written by this
-> pipeline's own `place` step), so on a repo with no genuine releases yet,
-> everything else is provably inherited noise and gets safely wiped on your
-> first push to `main`. Also on that same first release, every branch
-> except `main`, `dev`, and `gh-pages` gets pruned, and `dev` gets
-> force-reset to match `main`'s tip — a fresh widget always starts from
-> `main == dev`, regardless of whether it came from the CLI (already true)
-> or a template copy (may have inherited a stray branch, or a `dev` full of
-> the source template's own unrelated preview history). All three of these
-> only ever apply before your *first* genuine release — once one exists,
-> they're permanently a no-op, so it's still safest to never manually
-> re-seed `gh-pages` again after that point.
->
-> "Use this template" also immediately fires this workflow once on its own,
-> the moment the repo is created — before you've cloned it, let alone
-> changed anything. That run is recognized (GitHub's own web-flow bot
-> creating the `main` ref) and **publishes no versioned release**: it
-> doesn't count as your first release, so the `0.0.1` override above still
-> applies in full once you actually push real changes. It does two useful
-> things, though: if you checked "Include all branches", it clears out
-> whatever foreign content came along (stray `v<version>/` dirs, a
-> root/`latest/` still pointing at the *source* repo's own path); and it
-> places the landing page at your repo-root URL so
-> `https://<you>.github.io/<repo>/` works right away, instead of 404ing
-> until your first real release. Your `/latest/` and `/v<version>/` URLs
-> stay absent (they 404) until you actually publish — there's no release to
-> point them at yet.
+> says, so `/`, `/latest/`, and `/v0.0.1/` all go live right away (once
+> you've done the one-time Pages setup below). You don't reset the version
+> by hand: on that first release the pipeline also **rewrites
+> `package.json`'s version back to `0.0.1` in the repo itself** (a commit it
+> pushes to `main`/`dev`), so your *next* release naturally bumps to
+> `0.0.2` instead of jumping to whatever inherited number you started with.
+> If you also checked **"Include all branches"** (to get `gh-pages`/Pages
+> already set up, no manual Settings step), that first release also clears
+> out every leftover bit of inherited content it finds — stray
+> `v<version>/` dirs, and a root/`latest/` still pointing at the *source*
+> repo's own path — before writing its own. A `v<version>/` only counts as
+> a genuine prior release once it carries a `showcase-meta.json` naming
+> *this* repo, so on a repo with no genuine releases yet, everything else is
+> provably inherited noise and gets safely replaced. On that same first
+> release, every branch except `main`, `dev`, and `gh-pages` is pruned and
+> `dev` is force-reset to match `main`'s tip — a fresh widget always starts
+> from `main == dev`, whether it came from the CLI (already true) or a
+> template copy (may have inherited a stray branch, or a `dev` full of the
+> source template's own unrelated preview history). All of this only ever
+> applies before your *first* genuine release — once one exists, it's
+> permanently a no-op, so it's still safest to never manually re-seed
+> `gh-pages` again after that point.
 
 **One-time setup** (the workflow can't do this part for you):
 
