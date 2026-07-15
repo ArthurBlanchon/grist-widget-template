@@ -40,6 +40,12 @@
 //     `place` (the only other caller of this cleanup) so foreign content
 //     from "Use this template" would otherwise sit untouched indefinitely.
 //
+//   place-root --site <dir> --dist <dir>
+//     Place a root-based build (built with base "/<repo>/") at the site
+//     root only -- the showcase hub landing page. Used on the ref-created
+//     push so the bare repo-root URL works before the first real release,
+//     without publishing a versioned release. Run after `cleanup-foreign`.
+//
 //   remove   --site <dir>
 //     Removes dev/ from the gh-pages tree (retire the dev URL when the `dev`
 //     branch is deleted). Never touches a release or latest/.
@@ -143,10 +149,21 @@ export function plan(siteDir, repo, event, ref, { force = false, created = false
   // gh-pages) keeps hasGenuineRelease() false, so the override survives
   // intact for whenever a real release actually happens.
   if (created && event === "push") {
+    // Publish no versioned release (so the first-release override above
+    // survives), but the caller still builds + places the showcase hub at
+    // the site root -- otherwise https://owner.github.io/<repo>/ is a bare
+    // 404 until the widget's first real release (found live on a fresh "Use
+    // this template" copy). The hub renders for any URL with no channel
+    // suffix, the bare root included (see main.tsx), so it must be built
+    // based at the repo root (/<repo>/), not a versioned path -- hence the
+    // root base here rather than basePathFor's v<version>/. The workflow
+    // keys off reason === "ref-created" to build with this base and place
+    // root-only. `skip` stays true so the normal versioned place/finalize
+    // path is bypassed.
     return {
       context: "release",
       version,
-      base: basePathFor(repo, "release", version),
+      base: `/${repo}/`,
       skip: true,
       reason: "ref-created",
       firstRelease,
@@ -314,6 +331,27 @@ export function placeTarget({ siteDir, channel, version, distDir, sha, ref, repo
 }
 
 /**
+ * Place a root-based build (built with base "/<repo>/") at the gh-pages site
+ * root only -- the showcase hub landing page, nothing else. Used on the
+ * ref-created "Use this template" push (see plan()): publishes no versioned
+ * release, so the first-release override survives, but keeps the bare
+ * repo-root URL from 404ing until that first real release (found live: a
+ * fresh copy's https://owner.github.io/<repo>/ was a 404, since the initial
+ * deploy that used to place this hub now publishes nothing). Never creates a
+ * v<version>/ or latest/. On the first genuine release, placeTarget's own
+ * cleanupForeignVersionsIfFirstRelease clears this hub (root index.html +
+ * assets/) before placing the release's own root copy, so nothing lingers.
+ * Callers run `cleanup-foreign` first, so a re-triggered ref-created run
+ * replaces the hub cleanly rather than layering onto stale files.
+ */
+export function placeRootHub({ siteDir, distDir }) {
+  if (!existsSync(distDir)) throw new Error(`dist not found: ${distDir}`)
+  mkdirSync(siteDir, { recursive: true })
+  cpSync(distDir, siteDir, { recursive: true })
+  return { placed: "root" }
+}
+
+/**
  * Remove the mutable dev dir from the gh-pages tree (retire the dev URL when
  * the `dev` branch is deleted). Only ever touches `dev/` — never a versioned
  * release or `latest/`. No-op if absent.
@@ -451,6 +489,11 @@ function main() {
     case "cleanup-foreign": {
       const res = cleanupForeignVersionsIfFirstRelease(args.site, args.repo)
       console.log("cleanup-foreign:", JSON.stringify(res))
+      break
+    }
+    case "place-root": {
+      const res = placeRootHub({ siteDir: args.site, distDir: args.dist })
+      console.log("place-root:", JSON.stringify(res))
       break
     }
     case "finalize": {

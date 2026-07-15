@@ -14,10 +14,12 @@ name: Deploy widget to GitHub Pages
 #     scaffold's own first `git push -u origin main` also creates that ref
 #     for the first time, but is a real user's genuine first release and
 #     must not be skipped -- the web-flow committer check tells the two
-#     apart.) That skipped run still clears any foreign content the copy
-#     brought along (stray v<version>/ dirs, a root/latest/ still pointing
-#     at the source repo's own path) via `cleanup-foreign`, so root/latest/
-#     aren't left blank until the widget's real first release.
+#     apart.) That run still clears any foreign content the copy brought
+#     along (stray v<version>/ dirs, a root/latest/ still pointing at the
+#     source repo's own path) via `cleanup-foreign`, and places the freshly
+#     built showcase hub at the site root via `place-root`, so the bare
+#     repo-root URL works immediately instead of 404ing until the widget's
+#     real first release. It just never creates a v<version>/ or latest/.
 #   - push to dev                    -> dev channel: mutable /<repo>/dev/
 #     with version.json + a self-reload snippet, for live review inside Grist.
 #
@@ -119,8 +121,11 @@ jobs:
             fs.appendFileSync(out, `firstRelease=${p.firstRelease ? "true" : "false"}\n`);
           ' "$PLAN"
 
+      # Also builds on the ref-created push (skip == 'true' there), but with
+      # the root base plan() hands back for that case (/<repo>/, not a
+      # versioned path) -- see the "landing hub" step below.
       - name: Build
-        if: steps.plan.outputs.skip != 'true'
+        if: steps.plan.outputs.skip != 'true' || steps.plan.outputs.reason == 'ref-created'
         run: |
           pnpm exec tsc -b
           pnpm exec vite build --base "${{ steps.plan.outputs.base }}"
@@ -141,15 +146,24 @@ jobs:
         if: steps.plan.outputs.skip == 'true' && steps.plan.outputs.reason != 'ref-created'
         run: echo "== skip — v${{ steps.plan.outputs.version }} already published"
 
-      # The ref-created push never reaches Build/Place, so it's the only
-      # path where cleanupForeignVersionsIfFirstRelease (normally a side
-      # effect of Place) needs to run standalone -- otherwise foreign
-      # content from "Use this template" (stray v<version>/ dirs, a
-      # root/latest/ pointing at the source repo's own path) sits untouched
-      # until the widget's real first release.
-      - name: Clean foreign content (ref-created push published nothing)
+      # The ref-created "Use this template" push publishes no versioned
+      # release (that would spend the first-release override on unmodified
+      # boilerplate -- see plan()), so it never reaches Place. But it still:
+      #   1. clears any foreign content the copy brought along
+      #      (cleanupForeignVersionsIfFirstRelease, normally a side effect of
+      #      Place) -- stray v<version>/ dirs, a root/latest/ pointing at the
+      #      source repo's own path; then
+      #   2. places the freshly built showcase hub at the site root, so
+      #      https://owner.github.io/<repo>/ isn't a bare 404 until the
+      #      widget's first real release (the CLI path gets a working root on
+      #      its own genuine first push; this makes the template-copy path
+      #      match). No v<version>/ or latest/ -- those stay absent, correctly
+      #      404ing, until a real release exists.
+      - name: Clean foreign content + place landing hub (ref-created push)
         if: steps.plan.outputs.reason == 'ref-created'
-        run: node scripts/deploy.mjs cleanup-foreign --site site --repo "$REPO_NAME"
+        run: |
+          node scripts/deploy.mjs cleanup-foreign --site site --repo "$REPO_NAME"
+          node scripts/deploy.mjs place-root --site site --dist dist
 
       - name: Finalize (versions.json + commit + push)
         run: |
