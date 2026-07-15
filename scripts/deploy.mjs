@@ -19,32 +19,17 @@
 //
 // Subcommands:
 //   plan     --site <dir> --repo <name> --event <push|workflow_dispatch>
-//            --ref <ref> [--force] [--created]
+//            --ref <ref> [--force]
 //     Prints JSON { context: "release"|"dev", version?, base, skip }.
 //     Release is skipped when v<version> already exists on gh-pages
 //     (idempotence: re-pushing main without a version bump is a no-op).
-//     --created additionally skips unconditionally, without consuming the
-//     first-release version override -- see plan()'s own comment. Callers
-//     must only pass --created for GitHub's own server-side "Use this
-//     template" push, never a real user push that merely happens to create
-//     a ref for the first time (e.g. a CLI scaffold's first `git push -u
-//     origin main`) -- see deploy.yml's wiring for the distinguishing check.
+//     A repo's first genuine release always resolves to v0.0.1 regardless of
+//     package.json's version -- so "Use this template" (whose initial push
+//     to main fires this workflow) publishes a clean v0.0.1 straight away.
 //
 //   place    --site <dir> --repo <name> --channel <release|dev>
 //            [--version <v>] --dist <dir> --sha <sha> [--ref <ref>]
 //     Copies a freshly built dist into the gh-pages tree.
-//
-//   cleanup-foreign --site <dir> --repo <name>
-//     Standalone entry point for `cleanupForeignVersionsIfFirstRelease` --
-//     used on a skipped ref-created push (see `plan`), which never reaches
-//     `place` (the only other caller of this cleanup) so foreign content
-//     from "Use this template" would otherwise sit untouched indefinitely.
-//
-//   place-root --site <dir> --dist <dir>
-//     Place a root-based build (built with base "/<repo>/") at the site
-//     root only -- the showcase hub landing page. Used on the ref-created
-//     push so the bare repo-root URL works before the first real release,
-//     without publishing a versioned release. Run after `cleanup-foreign`.
 //
 //   remove   --site <dir>
 //     Removes dev/ from the gh-pages tree (retire the dev URL when the `dev`
@@ -56,7 +41,8 @@
 //
 //   reset-branches [--repo-dir <dir>]
 //     On a repo's first genuine release only (caller gates on plan()'s
-//     firstRelease): prunes every branch except main/dev/gh-pages and
+//     firstRelease): resets package.json's version to 0.0.1, prunes every
+//     branch except main/dev/gh-pages, and
 //     force-resets dev to main's current tip.
 
 import {
@@ -119,7 +105,7 @@ function hasGenuineRelease(siteDir, repo) {
  * genuinely published by this repo before (unless force), so re-pushing main
  * without a version bump is a no-op.
  */
-export function plan(siteDir, repo, event, ref, { force = false, created = false } = {}) {
+export function plan(siteDir, repo, event, ref, { force = false } = {}) {
   const isRelease = event === "workflow_dispatch" || ref === "refs/heads/main" || ref === "main"
   if (!isRelease) {
     return { context: "dev", base: basePathFor(repo, "dev") }
@@ -129,46 +115,20 @@ export function plan(siteDir, repo, event, ref, { force = false, created = false
   // whatever package.json's version field says -- found live: a repo copied
   // via GitHub's "Use this template" inherited "0.2.18" from the source
   // template repo's own main branch (itself a canary-stamped scaffold that
-  // had been promoted there), instead of starting fresh. Once a repo has a
-  // genuine release, this no longer applies -- its own version bumps are
-  // its own responsibility from then on, same as `cleanupForeignVersionsIfFirstRelease`.
+  // had been promoted there), instead of starting fresh. This is what makes
+  // "Use this template" publish a clean v0.0.1 the moment the repo is
+  // created (GitHub's own initial push to main fires this workflow): the
+  // copy's inherited canary version is ignored for that first release. To
+  // keep the *next* release clean too, the workflow's first-release reset
+  // step rewrites package.json's version back to 0.0.1 in the repo itself
+  // (see `resetBranchesIfFirstRelease`), so the second release naturally
+  // bumps from 0.0.1 rather than the inherited canary number. Once a repo
+  // has a genuine release, this override no longer applies -- its own
+  // version bumps are its own responsibility from then on.
   const firstRelease = !hasGenuineRelease(siteDir, repo)
   const version = firstRelease ? "0.0.1" : pkg.version
   if (!version) throw new Error("package.json has no version")
   const versionDir = join(siteDir, `v${version}`)
-  // GitHub's "Use this template" copies the source repo's main branch onto a
-  // brand-new ref, which fires this same push-to-main event itself --
-  // before anyone has done any real work. Without this check, that event
-  // would consume the first-release override above on whatever unmodified
-  // boilerplate happens to be checked in, so the widget's *actual* first
-  // release (once someone merges real content) no longer counts as
-  // firstRelease and publishes under that boilerplate's version verbatim
-  // instead of a clean 0.0.1 -- found live (a monorepo widget moved into its
-  // own repo this way published its real first release as "v0.2.21").
-  // Skipping this event entirely (never placing anything, never touching
-  // gh-pages) keeps hasGenuineRelease() false, so the override survives
-  // intact for whenever a real release actually happens.
-  if (created && event === "push") {
-    // Publish no versioned release (so the first-release override above
-    // survives), but the caller still builds + places the showcase hub at
-    // the site root -- otherwise https://owner.github.io/<repo>/ is a bare
-    // 404 until the widget's first real release (found live on a fresh "Use
-    // this template" copy). The hub renders for any URL with no channel
-    // suffix, the bare root included (see main.tsx), so it must be built
-    // based at the repo root (/<repo>/), not a versioned path -- hence the
-    // root base here rather than basePathFor's v<version>/. The workflow
-    // keys off reason === "ref-created" to build with this base and place
-    // root-only. `skip` stays true so the normal versioned place/finalize
-    // path is bypassed.
-    return {
-      context: "release",
-      version,
-      base: `/${repo}/`,
-      skip: true,
-      reason: "ref-created",
-      firstRelease,
-    }
-  }
   const exists = isGenuineRelease(versionDir, repo)
   return {
     context: "release",
@@ -271,11 +231,11 @@ function replaceDir(dest, srcDist) {
  * template" -> "Include all branches"): stray `v<version>/` directories,
  * but also a root `index.html`/`latest/` still referencing the *source*
  * repo's own base path (found live: a fresh copy's root and `latest/`
- * pointed at `/grist-widget-template/v0.2.22/assets/...`, 404ing on this
- * repo's own Pages site -- a blank page -- because the ref-created push
- * that used to overwrite them with this repo's own build is now skipped
- * entirely, see `plan()`). Safe to clear unconditionally: a repo with zero
- * genuine releases can't have any of its own history to lose. Once a
+ * pointed at `/grist-widget-template/v0.2.22/assets/...`, which 404s on
+ * this repo's own Pages site). Called by `placeTarget` right before it
+ * writes this repo's own first release, so the inherited noise is replaced
+ * rather than layered under. Safe to clear unconditionally: a repo with
+ * zero genuine releases can't have any of its own history to lose. Once a
  * genuine release exists for this repo, buildVersionsManifest is non-empty
  * and this is permanently a no-op.
  */
@@ -328,27 +288,6 @@ export function placeTarget({ siteDir, channel, version, distDir, sha, ref, repo
   mkdirSync(siteDir, { recursive: true })
   cpSync(distDir, siteDir, { recursive: true })
   return { placed: `v${version}`, latest: "latest", root: true }
-}
-
-/**
- * Place a root-based build (built with base "/<repo>/") at the gh-pages site
- * root only -- the showcase hub landing page, nothing else. Used on the
- * ref-created "Use this template" push (see plan()): publishes no versioned
- * release, so the first-release override survives, but keeps the bare
- * repo-root URL from 404ing until that first real release (found live: a
- * fresh copy's https://owner.github.io/<repo>/ was a 404, since the initial
- * deploy that used to place this hub now publishes nothing). Never creates a
- * v<version>/ or latest/. On the first genuine release, placeTarget's own
- * cleanupForeignVersionsIfFirstRelease clears this hub (root index.html +
- * assets/) before placing the release's own root copy, so nothing lingers.
- * Callers run `cleanup-foreign` first, so a re-triggered ref-created run
- * replaces the hub cleanly rather than layering onto stale files.
- */
-export function placeRootHub({ siteDir, distDir }) {
-  if (!existsSync(distDir)) throw new Error(`dist not found: ${distDir}`)
-  mkdirSync(siteDir, { recursive: true })
-  cpSync(distDir, siteDir, { recursive: true })
-  return { placed: "root" }
 }
 
 /**
@@ -410,19 +349,50 @@ export function finalize({ siteDir, updateVersions, push, commitMessage, remoteB
 }
 
 /**
- * Establish the schema every widget repo should start from -- `main` and
- * `dev` identical, `gh-pages` managed by CI only -- by pruning every other
- * branch and force-resetting `dev` to `main`'s current tip (the commit
- * already checked out at `repoDir`). Runs once, gated by the caller on
- * `plan()`'s `firstRelease` flag, so it applies equally to a CLI scaffold
- * (already satisfies this trivially -- nothing to prune, dev already equals
- * main) and a repo copied via GitHub's "Use this template" (may have a
- * stray inherited branch, or `dev` tracking the source template's own
- * unrelated preview history). Operates on `repoDir`, the repo's own
- * checkout -- a different directory than the gh-pages `siteDir` every other
- * function here works with.
+ * Establish the state every widget repo should start from, on its first
+ * genuine release only (gated by the caller on `plan()`'s `firstRelease`):
+ *
+ *   1. Reset package.json's version to 0.0.1. The first release already
+ *      published v0.0.1 (forced by plan() regardless of package.json), but a
+ *      repo copied via GitHub's "Use this template" still carries the source
+ *      template's inherited canary version in the file (found live: a copy
+ *      shipped 0.2.23) -- so its *next* release would jump straight to
+ *      v0.2.24 instead of a clean v0.0.2. Rewriting the file to 0.0.1 here,
+ *      committed to main, makes the next bump land on 0.0.2. A CLI scaffold
+ *      already ships 0.0.1, so this is a no-op there.
+ *   2. main == dev, gh-pages CI-managed only: prune every other branch and
+ *      force-reset `dev` to `main`'s current tip (which now carries the
+ *      version-reset commit). A CLI scaffold satisfies this trivially; a
+ *      "Use this template" copy may have a stray inherited branch, or a
+ *      `dev` tracking the source template's own unrelated preview history.
+ *
+ * Operates on `repoDir`, the repo's own checkout -- a different directory
+ * than the gh-pages `siteDir` every other function here works with. The
+ * version-reset commit re-triggers this workflow on main, but that run sees
+ * a genuine release already published (firstRelease=false) and skips both
+ * the release and this reset, so there's no loop.
  */
 export function resetBranchesIfFirstRelease(repoDir, keep = ["main", "dev", "gh-pages"]) {
+  let versionReset = false
+  const pkgPath = join(repoDir, "package.json")
+  if (existsSync(pkgPath)) {
+    const pkg = JSON.parse(readFileSync(pkgPath, "utf8"))
+    if (pkg.version !== "0.0.1") {
+      pkg.version = "0.0.1"
+      writeFileSync(pkgPath, JSON.stringify(pkg, null, 2) + "\n")
+      git(["add", "package.json"], repoDir)
+      git(
+        [
+          "-c", "user.name=github-actions[bot]",
+          "-c", "user.email=41898282+github-actions[bot]@users.noreply.github.com",
+          "commit", "-m", "chore: reset version to 0.0.1 for a clean first release",
+        ],
+        repoDir,
+      )
+      git(["push", "origin", "HEAD:refs/heads/main"], repoDir)
+      versionReset = true
+    }
+  }
   const raw = git(["ls-remote", "--heads", "origin"], repoDir)
   const branches = raw
     ? raw.split("\n").map((line) => line.split("refs/heads/")[1]).filter(Boolean)
@@ -434,7 +404,7 @@ export function resetBranchesIfFirstRelease(repoDir, keep = ["main", "dev", "gh-
     deletedBranches.push(b)
   }
   git(["push", "--force", "origin", "HEAD:refs/heads/dev"], repoDir)
-  return { deletedBranches, devReset: true }
+  return { deletedBranches, devReset: true, versionReset }
 }
 
 // ----------------------------------------------------------------------------
@@ -463,7 +433,6 @@ function main() {
     case "plan": {
       const result = plan(args.site, args.repo, args.event, args.ref, {
         force: !!args.force,
-        created: !!args.created,
       })
       process.stdout.write(JSON.stringify(result))
       break
@@ -484,16 +453,6 @@ function main() {
     case "remove": {
       const res = removeDevDir(args.site)
       console.log("remove:", JSON.stringify(res))
-      break
-    }
-    case "cleanup-foreign": {
-      const res = cleanupForeignVersionsIfFirstRelease(args.site, args.repo)
-      console.log("cleanup-foreign:", JSON.stringify(res))
-      break
-    }
-    case "place-root": {
-      const res = placeRootHub({ siteDir: args.site, distDir: args.dist })
-      console.log("place-root:", JSON.stringify(res))
       break
     }
     case "finalize": {
