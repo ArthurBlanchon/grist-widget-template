@@ -34,29 +34,21 @@ This is the **source** template. It is consumed two ways:
 standalone `pnpm install` (pnpm 11) exits cleanly; inside the monorepo it's
 ignored (the root workspace governs).
 
-### Live preview inside the monorepo (this template's own showcase)
+### Live preview
 
-This repo also deploys this template's own **unmodified** source to its own
-GitHub Pages — a live showcase of exactly what `npm create grist-widget`
-scaffolds, at `https://arthurblanchon.github.io/grist-widget-sdk/template/`.
-Same workflow every widget already uses:
-
-- Push template changes to the persistent `dev/template-showcase` branch —
-  every push auto-deploys a live preview at `.../template/dev/` that
-  self-reloads a few seconds later, same as a scaffolded widget's own `dev`
-  channel. Kept around permanently (not deleted after each round), so
-  `.../template/dev/` is always live to preview whatever's currently being
-  iterated on here.
-- Ready to release? **Bump `packages/create-grist-widget/package.json`'s
-  version**, open a PR from your feature branch into `main`, and merge —
-  merging is what actually publishes `.../template/v<version>/` +
-  `.../template/latest/` (and a real `create-grist-widget` npm release,
-  since that package embeds this template verbatim — see
-  `scripts/build-template.mjs`). Merging without a version bump publishes
-  nothing (same idempotent-skip rule as every other deploy pipeline here).
-
-See `scripts/deploy/template-showcase.mjs` + `.github/workflows/
-deploy-template-showcase.yml` (monorepo root) for the pipeline itself.
+This template has no live-preview deploy of its own inside this monorepo —
+that used to exist (a `/template/` showcase on this repo's own GitHub
+Pages) but has been retired. The only live preview of this template's
+current source is external: `template-canary.yml` scaffolds it via the
+*published* `create-grist-widget` package and pushes to the `dev` and
+`canary/latest` branches of
+[`grist-widget-template`](https://github.com/ArthurBlanchon/grist-widget-template)
+after every release — see `apps/docs/files/releasing.md` for the full
+mechanism. There is no live preview of *unreleased* changes to this
+template; to try one locally, scaffold from your working tree with
+`pnpm --filter create-grist-widget build` (embeds this template verbatim —
+see `scripts/build-template.mjs`) and run the packed CLI against a scratch
+directory, same as `scripts/smoke/create-widget.sh` does.
 
 ## Deployment
 
