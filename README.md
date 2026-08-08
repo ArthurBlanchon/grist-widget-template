@@ -6,14 +6,14 @@ Base template to build a Grist widget with `grist-widget-sdk`.
 
 Opened outside a Grist iframe, `main.tsx` picks between two components purely by URL shape (`src/lib/showcase-routing.ts`, no router needed): a bare path with no recognized channel suffix renders `TemplateLanding` (its own hero, onboarding, and released-version index); `/latest/`, `/dev/`, or `/v<version>/` renders `ChannelNotice` instead — a distinct hero explaining which build this is, chips to jump to any other version/channel (`src/lib/showcase-versions.ts`), and a copy-this-URL helper for pasting into Grist's custom widget field. Both render `ScaffoldFooter` (`src/components/scaffold-footer.tsx`) at the bottom — a small, purely informational note ("Scaffolded from `create-grist-widget@X.Y.Z`") built from `package.json`'s `createGristWidgetVersion` field, which the CLI stamps on every real scaffold (`vite.config.ts` injects it as `__CREATE_GRIST_WIDGET_VERSION__`). Renders nothing if that field is absent, e.g. this pristine template source itself.
 
-When actually embedded, `GristStatusChip` (`src/components/grist-status-chip.tsx`) shows a small pill with live handshake status — connecting, retrying with a countdown, connected, or unavailable — using `useAmbientGristHandshake()` from `grist-widget-sdk/advanced`. It must be mounted *inside* `GristWidgetProvider` (see `src/main.tsx`): it only observes that provider's own handshake manager and never mounts a second one, so it's purely observational and can never duplicate or race the real handshake (see `apps/docs/api/handshake.md`).
+When actually embedded, `GristStatusChip` (`src/components/grist-status-chip.tsx`) shows a small pill with live handshake status — connecting, retrying with a countdown, connected, or unavailable — using `useAmbientGristHandshake()` from `grist-widget-sdk/advanced`. It must be mounted *inside* `GristWidgetProvider` (see `src/main.tsx`): it only observes that provider's own handshake manager and never mounts a second one, so it's purely observational and can never duplicate or race the real handshake (see the [handshake API reference](https://gristwidgets.com/docs/sdk/api/handshake)).
 
 `src/App.tsx` uses `useGrist<TaskRow, TaskMapped>()` for the selected row (`w.record`, `w.mode`) and remounts the UI with `key={rowKey}` when the row changes — same pattern as `widgets/create-email-draft`. See `src/grist-types.example.ts` for typing patterns.
 
 - **ESLint** blocks direct `grist` global usage in `src/` — use the SDK only.
 - Uncomment `GRIST_OPTIONS.columns` in `App.tsx` to enable column mapping; `main.tsx` sets `GristBoundary gate="canRender"` when columns are declared. Mapping alerts use `GristSdkAlerts`.
 
-To add widget tests later, see [Testing](https://github.com/ArthurBlanchon/grist-widget-sdk/blob/main/apps/docs/guide/testing.md) (`renderWithGrist` from `grist-widget-sdk/emulator/testing`).
+To add widget tests later, see [Testing](https://gristwidgets.com/docs/sdk/guide/testing) (`renderWithGrist` from `grist-widget-sdk/emulator/testing`).
 
 **Monorepo dev:** this template resolves `grist-widget-sdk` from `packages/core/dist` (like the other widgets), not from SDK source. After changing the SDK, run `pnpm prebuild` or `pnpm --filter grist-widget-sdk build` before `pnpm dev`.
 
@@ -43,7 +43,7 @@ current source is external: `template-canary.yml` scaffolds it via the
 *published* `create-grist-widget` package and pushes to the `dev` and
 `canary/latest` branches of
 [`grist-widget-template`](https://github.com/ArthurBlanchon/grist-widget-template)
-after every release — see `apps/docs/files/releasing.md` for the full
+after every release — see https://gristwidgets.com/docs/contributing/releasing for the full
 mechanism. There is no live preview of *unreleased* changes to this
 template; to try one locally, scaffold from your working tree with
 `pnpm --filter create-grist-widget build` (embeds this template verbatim —
