@@ -12,8 +12,12 @@ name: Deploy widget to GitHub Pages
 #     v0.0.1 + /latest/ + root right away, discarding any inherited canary
 #     version. On that same first release, the "Reset repo to a clean
 #     first-release state" step below rewrites package.json's version back to
-#     0.0.1 in the repo itself, so the *next* release bumps to 0.0.2 rather
-#     than the inherited number.
+#     0.0.1 in the repo itself (so the *next* release bumps to 0.0.2 rather
+#     than the inherited number) and, since "Use this template" never runs
+#     the CLI's own rename step, also personalizes the four placeholder-
+#     identity spots (package.json's name, README.md's heading, index.html's
+#     <title>, App.tsx's title) to match this repo's real name -- a no-op
+#     wherever that placeholder text is already gone.
 #   - push to dev                    -> dev channel: mutable /<repo>/dev/
 #     with version.json + a self-reload snippet, for live review inside Grist.
 #
@@ -158,7 +162,7 @@ jobs:
       # run sees v0.0.1 already published (firstRelease=false) and no-ops.
       - name: Reset repo to a clean first-release state
         if: steps.plan.outputs.context == 'release' && steps.plan.outputs.firstRelease == 'true'
-        run: node scripts/deploy.mjs reset-branches
+        run: node scripts/deploy.mjs reset-branches --repo "$REPO_NAME"
 
   cleanup:
     # When the `dev` branch is deleted, remove /dev/ so the dev URL retires
