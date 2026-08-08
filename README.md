@@ -28,7 +28,7 @@ This is the **source** template. It is consumed two ways:
 - **Externally (your own repo):** the `create-grist-widget` CLI
   (`npm create grist-widget my-widget`) copies this template and rewrites the
   dependency to the published npm range (`^0.x`), so nothing points back at
-  this repo. See [Getting started](https://grist-widgets.com/guide/getting-started).
+  this repo. See [Getting started](https://gristwidgets.com/docs/sdk/guide/getting-started).
 
 `pnpm-workspace.yaml` here only pre-approves esbuild's build script so a
 standalone `pnpm install` (pnpm 11) exits cleanly; inside the monorepo it's
