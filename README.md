@@ -8,12 +8,12 @@ Opened outside a Grist iframe, `main.tsx` picks between two components purely by
 
 When actually embedded, `GristStatusChip` (`src/components/grist-status-chip.tsx`) shows a small pill with live handshake status — connecting, retrying with a countdown, connected, or unavailable — using `useAmbientGristHandshake()` from `grist-widget-sdk/advanced`. It must be mounted *inside* `GristWidgetProvider` (see `src/main.tsx`): it only observes that provider's own handshake manager and never mounts a second one, so it's purely observational and can never duplicate or race the real handshake (see the [handshake API reference](https://gristwidgets.com/docs/sdk/api/handshake)).
 
-`src/App.tsx` uses `useGrist<TaskRow, TaskMapped>()` for the selected row (`w.record`, `w.mode`) and remounts the UI with `key={rowKey}` when the row changes — same pattern as `widgets/create-email-draft`. See `src/grist-types.example.ts` for typing patterns.
+`src/App.tsx` uses `useGrist<TaskRow, TaskMapped>()` for the selected row (`w.record`, `w.mode`) and remounts the UI with `key={rowKey}` when the row changes — same pattern as `widgets/create-email-draft`. It ships with two mapped columns (`title`, `done`) and an editable form that saves back via `w.table.update(...)`/`w.mapBack(...)` — the smallest real starting point, not a placeholder. See `src/grist-types.example.ts` for typing patterns.
 
 - **ESLint** blocks direct `grist` global usage in `src/` — use the SDK only.
-- Uncomment `GRIST_OPTIONS.columns` in `App.tsx` to enable column mapping; `main.tsx` sets `GristBoundary gate="canRender"` when columns are declared. Mapping alerts use `GristSdkAlerts`.
+- Edit `GRIST_OPTIONS.columns` in `App.tsx` to change the required columns (or remove the array entirely to read raw, unmapped records instead); `main.tsx` sets `GristBoundary gate="canRender"` whenever columns are declared. Mapping alerts use `GristSdkAlerts`.
 
-To add widget tests later, see [Testing](https://gristwidgets.com/docs/sdk/guide/testing) (`renderWithGrist` from `grist-widget-sdk/emulator/testing`).
+Run `pnpm test` — see `src/App.test.tsx` for the pattern (`renderWithGrist` + `presets` from `grist-widget-sdk/emulator/testing`, no browser or real Grist doc needed). Full guide: [Testing](https://gristwidgets.com/docs/sdk/guide/testing).
 
 **Monorepo dev:** this template resolves `grist-widget-sdk` from `packages/core/dist` (like the other widgets), not from SDK source. After changing the SDK, run `pnpm prebuild` or `pnpm --filter grist-widget-sdk build` before `pnpm dev`.
 

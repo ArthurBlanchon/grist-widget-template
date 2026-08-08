@@ -1,4 +1,7 @@
+import { useState, type FormEvent } from "react"
+
 import { Button } from "@/components/ui/button"
+import { Input } from "@/components/ui/input"
 import {
   useGrist,
   useWidgetMetadata,
@@ -9,18 +12,21 @@ import {
 import type { TaskMapped, TaskRow } from "./grist-types.example"
 
 export const GRIST_OPTIONS: UseGristOptions = {
-  requiredAccess: "read table",
-  // Uncomment to require column mapping in the widget config panel:
-  // columns: [{ name: "title", type: "Text" }, { name: "done", type: "Bool" }],
+  requiredAccess: "full",
+  columns: [
+    { name: "title", type: "Text" },
+    { name: "done", type: "Bool" },
+  ],
 }
 
 export const WIDGET_METADATA = {
   title: "Grist Widget Template",
-  description:
-    "Starter template for building Grist widgets with React and Vite.",
+  description: "Edit the selected row's title and mark it done.",
 } as const
 
-function GristSelectionDebug({ w }: { w: UseGristResult }) {
+type TemplateGrist = UseGristResult<TaskRow, TaskMapped>
+
+function GristSelectionDebug({ w }: { w: TemplateGrist }) {
   return (
     <details className="rounded-md border border-dashed border-muted-foreground/40 bg-muted/30 p-3 text-xs">
       <summary className="cursor-pointer font-medium text-muted-foreground">
@@ -45,7 +51,88 @@ function GristSelectionDebug({ w }: { w: UseGristResult }) {
   )
 }
 
-function TemplateBody({ w }: { w: UseGristResult }) {
+type Draft = { title: string; done: boolean }
+
+function readDraft(mapped: TaskMapped | null): Draft {
+  return { title: mapped?.title ?? "", done: mapped?.done ?? false }
+}
+
+function RowEditor({ w }: { w: TemplateGrist }) {
+  const [draft, setDraft] = useState<Draft>(() => readDraft(w.mappedRecord))
+  const [saveError, setSaveError] = useState<string | null>(null)
+
+  async function save(e: FormEvent) {
+    e.preventDefault()
+    if (!w.record) return
+    setSaveError(null)
+    try {
+      await w.table.update({
+        id: w.record.id,
+        fields: w.mapBack({ title: draft.title, done: draft.done }),
+      })
+    } catch (err) {
+      setSaveError(err instanceof Error ? err.message : String(err))
+    }
+  }
+
+  return (
+    <form onSubmit={save} className="flex flex-col gap-4 p-6 text-sm">
+      <header>
+        <h1 className="font-medium">Row #{String(w.record!.id)}</h1>
+        <p className="text-muted-foreground">
+          Edit the fields, then save back to Grist via{" "}
+          <code className="rounded bg-muted px-1 text-xs">table.update</code>.
+        </p>
+      </header>
+
+      <label className="flex flex-col gap-1">
+        <span className="text-xs font-medium tracking-wide text-muted-foreground uppercase">
+          Title
+        </span>
+        <Input
+          required
+          value={draft.title}
+          onChange={(e) => setDraft((d) => ({ ...d, title: e.target.value }))}
+        />
+      </label>
+
+      <label className="flex items-center gap-2">
+        <input
+          type="checkbox"
+          className="size-4 rounded border-input"
+          checked={draft.done}
+          onChange={(e) => setDraft((d) => ({ ...d, done: e.target.checked }))}
+        />
+        <span>Mark as done</span>
+      </label>
+
+      {saveError ? (
+        <p className="text-xs text-destructive">{saveError}</p>
+      ) : null}
+
+      <div className="flex items-center gap-2">
+        <Button type="submit" disabled={w.actionStatus === "running"}>
+          {w.actionStatus === "running" ? "Saving…" : "Save"}
+        </Button>
+        <Button
+          type="button"
+          variant="outline"
+          onClick={() => setDraft(readDraft(w.mappedRecord))}
+          disabled={w.actionStatus === "running"}
+        >
+          Reset
+        </Button>
+        {w.actionStatus === "error" && w.actionError ? (
+          <span className="text-xs text-destructive">{w.actionError}</span>
+        ) : null}
+      </div>
+
+      <GristSelectionDebug w={w} />
+    </form>
+  )
+}
+
+function TemplateBody({ w }: { w: TemplateGrist }) {
   if (w.mode === "empty") {
     return (
       <div className="flex flex-col gap-4 p-6 text-sm">
@@ -64,22 +151,19 @@ function TemplateBody({ w }: { w: UseGristResult }) {
     )
   }
 
-  return (
-    <div className="flex min-h-svh p-6">
-      <div className="flex max-w-md min-w-0 flex-col gap-4 text-sm leading-loose">
-        <div>
-          <h1 className="font-medium">Widget connected to Grist</h1>
-          <p>Record id: {String(w.record?.id ?? "")}</p>
-          <p>You can now render values from the selected record.</p>
-          <Button className="mt-2">Button</Button>
-        </div>
+  if (!w.columnMappingStatus.ok) {
+    return (
+      <div className="flex flex-col gap-4 p-6 text-sm">
+        <p>
+          Open the widget configuration panel and map the two required
+          columns: Title, Done.
+        </p>
         <GristSelectionDebug w={w} />
-        <div className="font-mono text-xs text-muted-foreground">
-          (Press <kbd>d</kbd> to toggle dark mode)
-        </div>
       </div>
-    </div>
-  )
+    )
+  }
+
+  return <RowEditor key={String(w.record!.id)} w={w} />
 }
 
 /**

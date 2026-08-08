@@ -35,8 +35,8 @@ rendering all live in `src/App.tsx` — that's the one file to edit.
    itself only renders once actually embedded in a Grist document. An offline, seeded
    `pnpm dev` loop is planned but not shipped in this template yet — don't describe one as
    if it exists.
-3. **No test command yet.** `package.json` has no `test` script in this template today —
-   don't invent one or assume `pnpm test` works here.
+3. **Widget changes get a test.** `src/App.test.tsx` uses `renderWithGrist` + `presets` from
+   `grist-widget-sdk/emulator/testing` — no browser or real Grist doc needed. Run `pnpm test`.
 4. **Always develop on `dev`, release by merging to `main`.** Commit and push to `dev` for
    every change — it auto-deploys a live preview at `.../dev/` that self-reloads inside an
    open Grist document a few seconds later. Bump `package.json`'s `version` *before*
@@ -51,6 +51,7 @@ rendering all live in `src/App.tsx` — that's the one file to edit.
 | Install | `pnpm install` |
 | Dev server (showcase hub outside Grist) | `pnpm dev` |
 | Build | `pnpm build` |
+| Test | `pnpm test` |
 | Lint | `pnpm lint` |
 | Format | `pnpm format` |
 | Type-check | `pnpm typecheck` |
@@ -61,6 +62,7 @@ rendering all live in `src/App.tsx` — that's the one file to edit.
 | Concept | Path |
 | --- | --- |
 | The widget | `src/App.tsx` |
+| Widget test (the pattern to copy for new tests) | `src/App.test.tsx` |
 | Grist wiring / embed vs. showcase detection | `src/main.tsx` |
 | ui primitives | `src/components/ui/` |
 | Deploy workflow | `.github/workflows/deploy.yml` |
@@ -85,6 +87,6 @@ Full detail, including the two live URLs (`/latest/` and `/v<version>/`): `READM
 ## Anti-patterns
 
 - Calling `window.grist.*` inside widget code instead of the SDK's hooks
-- Describing a `pnpm test` command or a seeded offline `pnpm dev` preview — neither exists
-  in this template yet
+- Describing a seeded offline `pnpm dev` preview — that doesn't exist in this template yet
+  (only a seeded offline `pnpm test`, via `renderWithGrist`, does)
 - Merging `dev` into `main` without bumping `package.json`'s `version` first
