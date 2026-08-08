@@ -39,11 +39,13 @@
 //     Regenerates versions.json (release runs only) and commits + pushes the
 //     gh-pages tree with a rebase-and-retry loop.
 //
-//   reset-branches [--repo-dir <dir>]
+//   reset-branches [--repo-dir <dir>] [--repo <name>]
 //     On a repo's first genuine release only (caller gates on plan()'s
-//     firstRelease): resets package.json's version to 0.0.1, prunes every
-//     branch except main/dev/gh-pages, and
-//     force-resets dev to main's current tip.
+//     firstRelease): renames the four placeholder-identity spots (only if
+//     --repo is given and they still carry the template's own placeholder
+//     text -- a no-op for a CLI scaffold that already renamed itself), resets
+//     package.json's version to 0.0.1, prunes every branch except
+//     main/dev/gh-pages, and force-resets dev to main's current tip.
 
 import {
   existsSync,
@@ -349,9 +351,55 @@ export function finalize({ siteDir, updateVersions, push, commitMessage, remoteB
 }
 
 /**
+ * Derive an npm-safe package name and a human title from a real GitHub repo
+ * name -- which allows characters (uppercase, underscores, periods) npm
+ * package names don't. Mirrors the title-casing
+ * `packages/create-grist-widget/bin/create-grist-widget.mjs` already applies
+ * to its own CLI-provided `rawName`, so a repo named e.g. `Ask-Genial_Widget`
+ * produces the same shape of package name / title a CLI user typing
+ * `ask-genial-widget` would have gotten.
+ */
+export function deriveIdentity(repoName) {
+  const packageName =
+    (repoName || "")
+      .toLowerCase()
+      .replace(/[^a-z0-9-]+/g, "-")
+      .replace(/^-+|-+$/g, "") || "grist-widget"
+  const title = packageName
+    .split("-")
+    .filter(Boolean)
+    .map((w) => w[0].toUpperCase() + w.slice(1))
+    .join(" ")
+  return { packageName, title }
+}
+
+/**
+ * The same four placeholder-identity edits
+ * `packages/create-grist-widget/bin/create-grist-widget.mjs` applies at
+ * scaffold time, parameterized by a derived identity instead of CLI input.
+ * Each substitution is a plain string replace, so it's naturally a no-op
+ * wherever the placeholder text is already gone -- a CLI-scaffolded repo
+ * (whose name may legitimately differ from its GitHub repo name) is never
+ * touched by this.
+ */
+function identityEdits({ packageName, title }) {
+  return [
+    ["package.json", [["grist-widget-template-vite", packageName]]],
+    ["README.md", [["grist-widget-template-vite", packageName]]],
+    ["index.html", [["<title>Grist Widget</title>", `<title>${title}</title>`]]],
+    ["src/App.tsx", [['title: "Grist Widget Template",', `title: "${title}",`]]],
+  ]
+}
+
+/**
  * Establish the state every widget repo should start from, on its first
  * genuine release only (gated by the caller on `plan()`'s `firstRelease`):
  *
+ *   0. If `repo` is given, rewrite the four placeholder-identity spots (see
+ *      `identityEdits`) to match the real repo name -- the piece "Use this
+ *      template" skips entirely, since it copies the repo verbatim and never
+ *      runs the CLI's own rename step. Folded into the same commit as the
+ *      version reset below, not a separate one.
  *   1. Reset package.json's version to 0.0.1. The first release already
  *      published v0.0.1 (forced by plan() regardless of package.json), but a
  *      repo copied via GitHub's "Use this template" still carries the source
@@ -372,27 +420,55 @@ export function finalize({ siteDir, updateVersions, push, commitMessage, remoteB
  * a genuine release already published (firstRelease=false) and skips both
  * the release and this reset, so there's no loop.
  */
-export function resetBranchesIfFirstRelease(repoDir, keep = ["main", "dev", "gh-pages"]) {
+export function resetBranchesIfFirstRelease(repoDir, repo, keep = ["main", "dev", "gh-pages"]) {
+  const changedFiles = new Set()
+  const renamedFiles = []
+
+  if (repo) {
+    for (const [file, subs] of identityEdits(deriveIdentity(repo))) {
+      const p = join(repoDir, file)
+      if (!existsSync(p)) continue
+      const before = readFileSync(p, "utf8")
+      const after = subs.reduce((text, [search, replace]) => text.split(search).join(replace), before)
+      if (after !== before) {
+        writeFileSync(p, after)
+        changedFiles.add(file)
+        renamedFiles.push(file)
+      }
+    }
+  }
+  const identityReset = renamedFiles.length > 0
+
   let versionReset = false
   const pkgPath = join(repoDir, "package.json")
   if (existsSync(pkgPath)) {
+    // Re-read after any identity edit above, so a rewritten `name` survives
+    // this JSON round-trip instead of being clobbered by it.
     const pkg = JSON.parse(readFileSync(pkgPath, "utf8"))
     if (pkg.version !== "0.0.1") {
       pkg.version = "0.0.1"
       writeFileSync(pkgPath, JSON.stringify(pkg, null, 2) + "\n")
-      git(["add", "package.json"], repoDir)
-      git(
-        [
-          "-c", "user.name=github-actions[bot]",
-          "-c", "user.email=41898282+github-actions[bot]@users.noreply.github.com",
-          "commit", "-m", "chore: reset version to 0.0.1 for a clean first release",
-        ],
-        repoDir,
-      )
-      git(["push", "origin", "HEAD:refs/heads/main"], repoDir)
+      changedFiles.add("package.json")
       versionReset = true
     }
   }
+
+  if (changedFiles.size > 0) {
+    const parts = []
+    if (identityReset) parts.push("personalize scaffold")
+    if (versionReset) parts.push("reset version to 0.0.1")
+    git(["add", ...changedFiles], repoDir)
+    git(
+      [
+        "-c", "user.name=github-actions[bot]",
+        "-c", "user.email=41898282+github-actions[bot]@users.noreply.github.com",
+        "commit", "-m", `chore: ${parts.join(" + ")} for a clean first release`,
+      ],
+      repoDir,
+    )
+    git(["push", "origin", "HEAD:refs/heads/main"], repoDir)
+  }
+
   const raw = git(["ls-remote", "--heads", "origin"], repoDir)
   const branches = raw
     ? raw.split("\n").map((line) => line.split("refs/heads/")[1]).filter(Boolean)
@@ -404,7 +480,7 @@ export function resetBranchesIfFirstRelease(repoDir, keep = ["main", "dev", "gh-
     deletedBranches.push(b)
   }
   git(["push", "--force", "origin", "HEAD:refs/heads/dev"], repoDir)
-  return { deletedBranches, devReset: true, versionReset }
+  return { deletedBranches, devReset: true, versionReset, identityReset, renamedFiles }
 }
 
 // ----------------------------------------------------------------------------
@@ -467,7 +543,7 @@ function main() {
       break
     }
     case "reset-branches": {
-      const res = resetBranchesIfFirstRelease(args["repo-dir"] || ".")
+      const res = resetBranchesIfFirstRelease(args["repo-dir"] || ".", args.repo)
       console.log("reset-branches:", JSON.stringify(res))
       break
     }

@@ -40,8 +40,9 @@ This template has no live-preview deploy of its own inside this monorepo —
 that used to exist (a `/template/` showcase on this repo's own GitHub
 Pages) but has been retired. The only live preview of this template's
 current source is external: `template-canary.yml` scaffolds it via the
-*published* `create-grist-widget` package and pushes to the `dev` and
-`canary/latest` branches of
+*published* `create-grist-widget` package and pushes to the `dev` branch
+(pre-release preview) and directly to `main` (stable `@latest`, promotion is
+automatic) of
 [`grist-widget-template`](https://github.com/ArthurBlanchon/grist-widget-template)
 after every release — see https://gristwidgets.com/docs/contributing/releasing for the full
 mechanism. There is no live preview of *unreleased* changes to this
