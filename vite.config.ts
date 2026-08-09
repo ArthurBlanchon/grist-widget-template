@@ -26,5 +26,15 @@ export default defineConfig({
   },
   test: {
     environment: "jsdom",
+    // Most examples/<id>/ don't ship their own WidgetApp.test.tsx yet (it's
+    // optional, per docs/planning/2026-08-execution-plan.md §3) --
+    // overlayExampleSrc correctly deletes the template's own App.test.tsx
+    // when swapping in one that has none (it would otherwise assert against
+    // content that's no longer there), so `create --example <id>` / `use
+    // <id>` routinely leave a project with zero test files. Without this,
+    // `pnpm test` exits 1 ("No test files found") on every one of those --
+    // a project that legitimately has no tests yet should report green, not
+    // red. Found live testing the real published create-grist-widget@0.3.9.
+    passWithNoTests: true,
   },
 })
