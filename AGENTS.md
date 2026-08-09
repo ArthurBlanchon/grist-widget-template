@@ -30,11 +30,12 @@ rendering all live in `src/App.tsx` — that's the one file to edit.
 
 1. **Widgets use the SDK.** No direct `window.grist.*` calls — use `useGrist()` and the
    other `grist-widget-sdk` hooks.
-2. **`pnpm dev` shows the showcase hub today, not a seeded preview.** Opened outside Grist
-   it renders `TemplateLanding` (onboarding + links to released versions); the widget
-   itself only renders once actually embedded in a Grist document. An offline, seeded
-   `pnpm dev` loop is planned but not shipped in this template yet — don't describe one as
-   if it exists.
+2. **`pnpm dev` is a bare shell, on purpose — not a seeded preview.** Opened outside Grist
+   it renders `LocalDevNotice`; the widget itself only renders once actually embedded in a
+   Grist document. This is deliberate, not a gap: an emulator can't guarantee parity with
+   real Grist, so a fake local preview would teach the wrong lesson. Trust `pnpm test`
+   (headless, real assertions) for local feedback, and the `dev`-branch loop below for real
+   behavior — don't build or suggest a seeded `pnpm dev` preview.
 3. **Widget changes get a test.** `src/App.test.tsx` uses `renderWithGrist` + `presets` from
    `grist-widget-sdk/emulator/testing` — no browser or real Grist doc needed. Run `pnpm test`.
 4. **Always develop on `dev`, release by merging to `main`.** Commit and push to `dev` for
@@ -49,7 +50,7 @@ rendering all live in `src/App.tsx` — that's the one file to edit.
 | Intent | Command |
 | --- | --- |
 | Install | `pnpm install` |
-| Dev server (showcase hub outside Grist) | `pnpm dev` |
+| Dev server (bare shell outside Grist, pointing at the `dev` loop) | `pnpm dev` |
 | Build | `pnpm build` |
 | Test | `pnpm test` |
 | Lint | `pnpm lint` |
@@ -87,6 +88,7 @@ Full detail, including the two live URLs (`/latest/` and `/v<version>/`): `READM
 ## Anti-patterns
 
 - Calling `window.grist.*` inside widget code instead of the SDK's hooks
-- Describing a seeded offline `pnpm dev` preview — that doesn't exist in this template yet
-  (only a seeded offline `pnpm test`, via `renderWithGrist`, does)
+- Building or describing a seeded/live `pnpm dev` preview — deliberately not how this
+  template works (see above); `pnpm test` is the trusted local loop, real Grist via `/dev/`
+  is the trusted real one
 - Merging `dev` into `main` without bumping `package.json`'s `version` first

@@ -1,6 +1,5 @@
 import { useState } from "react"
 
-import { ScaffoldFooter } from "@/components/scaffold-footer"
 import { Button } from "@/components/ui/button"
 import {
   Card,
@@ -11,16 +10,15 @@ import {
 } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
 import { channelLabel, type Channel } from "@/lib/showcase-routing"
-import { devUrl, useVersions, versionUrl } from "@/lib/showcase-versions"
+import { devUrl, formatDate, useVersions, versionUrl } from "@/lib/showcase-versions"
 import { cn } from "@/lib/utils"
 
-// Shown instead of the widget tree on a specific channel build
-// (/latest/, /dev/, /v<version>/) when it's opened directly in a browser tab
-// -- not the rich showcase hub (that's `TemplateLanding`, shown when the URL
-// has no recognized channel suffix). Deliberately minimal, with its own hero
-// distinct from the hub's: this page's job is just to explain what you're
-// looking at, help you jump to a different build, and help you paste this
-// exact URL into Grist.
+// Shown on every non-embedded, built/deployed URL of this widget -- root,
+// /latest/, /dev/, /v<version>/, all carrying the same build per
+// scripts/deploy.mjs's plan() -- when opened outside Grist. Local `pnpm dev`
+// renders `LocalDevNotice` instead (see src/main.tsx): this component's
+// "paste this URL into Grist" instruction only makes sense for a real,
+// publicly reachable URL, never a bare localhost one.
 function VersionChips({ current }: { current: Channel }) {
   const { versions } = useVersions()
 
@@ -38,6 +36,7 @@ function VersionChips({ current }: { current: Channel }) {
       {versions !== null && versions.length > 0 && (
         <a
           href={versionUrl(versions[0].version)}
+          title={formatDate(versions[0].publishedAt)}
           className={chipClass(
             current.kind === "version" && current.version === versions[0].version,
           )}
@@ -52,6 +51,7 @@ function VersionChips({ current }: { current: Channel }) {
         <a
           key={v.version}
           href={versionUrl(v.version)}
+          title={formatDate(v.publishedAt)}
           className={chipClass(
             current.kind === "version" && current.version === v.version,
           )}
@@ -63,13 +63,7 @@ function VersionChips({ current }: { current: Channel }) {
   )
 }
 
-export function ChannelNotice({
-  channel,
-  hubPath,
-}: {
-  channel: Channel
-  hubPath: string
-}) {
+export function ReleaseInfo({ channel }: { channel: Channel }) {
   const [copied, setCopied] = useState(false)
   const url = window.location.href
 
@@ -90,12 +84,13 @@ export function ChannelNotice({
       </h1>
       <p className="mx-auto mt-3 mb-8 max-w-sm text-center text-sm text-muted-foreground">
         You're viewing the <span className="font-mono">{channelLabel(channel)}</span>{" "}
-        build directly, outside of Grist.
+        build directly, outside of Grist. Hover a chip below to see when it
+        shipped.
       </p>
 
       <VersionChips current={channel} />
 
-      <Card className="mb-4">
+      <Card>
         <CardHeader>
           <CardTitle>Use this as a Grist custom widget</CardTitle>
           <CardDescription>
@@ -111,15 +106,6 @@ export function ChannelNotice({
           </div>
         </CardContent>
       </Card>
-
-      <a
-        href={hubPath}
-        className="text-center text-sm text-muted-foreground underline underline-offset-4 hover:text-foreground"
-      >
-        ← Back to the template home
-      </a>
-
-      <ScaffoldFooter />
     </div>
   )
 }
