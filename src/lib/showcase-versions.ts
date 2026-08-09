@@ -2,9 +2,9 @@ import { useEffect, useState } from "react"
 
 import { parseShowcasePath } from "@/lib/showcase-routing"
 
-// Shared by the showcase hub (TemplateLanding) and the per-channel notice
-// (ChannelNotice) -- both need the same released-version list. URLs are
-// root-relative to wherever THIS deploy actually lives (derived from
+// Used by ReleaseInfo, which needs the released-version list on every
+// non-embedded, deployed URL. URLs are root-relative to wherever THIS
+// deploy actually lives (derived from
 // window.location.pathname via parseShowcasePath's hubPath), not hardcoded
 // to the grist-widget-sdk monorepo's own showcase: a real scaffolded
 // widget has its own versions.json and its own v<version>/ + dev/ dirs,
