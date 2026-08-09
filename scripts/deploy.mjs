@@ -132,11 +132,45 @@ export function plan(siteDir, repo, event, ref, { force = false } = {}) {
   if (!version) throw new Error("package.json has no version")
   const versionDir = join(siteDir, `v${version}`)
   const exists = isGenuineRelease(versionDir, repo)
+  const skip = exists && !force
+  // T-07: "merging without bumping the version publishes nothing" was a
+  // silent no-op, documented in two places (this file's own header comment,
+  // and AGENTS.md's Anti-patterns) instead of made unrepresentable. Turn it
+  // loud for the one case that actually means "I meant to publish and
+  // didn't": a genuine `push` to main (not `workflow_dispatch`, which has
+  // its own explicit --force for intentional rebuilds) landed on a repo
+  // that's already released before, and the version it resolved to was
+  // already published. If HEAD's parent had the *same* version, nothing
+  // about this push looks like an intentional re-run -- fail the workflow
+  // step instead of quietly reporting success. Falls back to today's silent
+  // skip if HEAD~1 doesn't resolve (e.g. a squashed/rebased history, or
+  // this being the repo's very first commit) -- this is a backstop for the
+  // common case, not a guarantee for every git topology.
+  if (event === "push" && !firstRelease && skip) {
+    try {
+      const previousPkgJson = execFileSync("git", ["show", "HEAD~1:package.json"], {
+        encoding: "utf8",
+      })
+      const previousVersion = JSON.parse(previousPkgJson).version
+      if (previousVersion === version) {
+        throw new Error(
+          `deploy: this push to main would publish nothing -- v${version} was already released and ` +
+            `package.json's version is unchanged from the previous commit. Bump "version" in package.json ` +
+            `before merging if you meant to publish new content (see AGENTS.md's Anti-patterns).`
+        )
+      }
+    } catch (err) {
+      // Re-throw our own message; swallow only git/JSON failures (HEAD~1
+      // missing, package.json didn't exist at that commit, etc.) and fall
+      // through to the existing silent-skip behavior for those cases.
+      if (err instanceof Error && err.message.startsWith("deploy: this push")) throw err
+    }
+  }
   return {
     context: "release",
     version,
     base: basePathFor(repo, "release", version),
-    skip: exists && !force,
+    skip,
     reason: exists ? (force ? "force-rebuild" : "already-published") : "new-version",
     // Exposed so the workflow can gate a one-time repo cleanup (prune stray
     // branches, reset dev to main) on exactly this signal -- see
