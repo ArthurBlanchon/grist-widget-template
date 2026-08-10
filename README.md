@@ -13,7 +13,7 @@ When actually embedded, `GristStatusChip` (`src/components/grist-status-chip.tsx
 - **ESLint** blocks direct `grist` global usage in `src/` — use the SDK only.
 - Edit `GRIST_OPTIONS.columns` in `App.tsx` to change the required columns (or remove the array entirely to read raw, unmapped records instead); `main.tsx` sets `GristBoundary gate="canRender"` whenever columns are declared. Mapping alerts use `GristSdkAlerts`.
 
-Run `pnpm test` — see `src/App.test.tsx` for the pattern (`renderWithGrist` + `presets` from `grist-widget-sdk/emulator/testing`, no browser or real Grist doc needed). Full guide: [Testing](https://gristwidgets.com/docs/sdk/guide/testing).
+Run `pnpm test` — see `src/App.test.tsx` for the pattern (`renderWithGrist` + `presets` from `grist-widget-sdk/emulator/testing`, no browser or real Grist doc needed). Full guide: [Testing](https://gristwidgets.com/docs/emulator/testing).
 
 **Monorepo dev:** this template resolves `grist-widget-sdk` from `packages/core/dist` (like the other widgets), not from SDK source. After changing the SDK, run `pnpm prebuild` or `pnpm --filter grist-widget-sdk build` before `pnpm dev`.
 
@@ -28,7 +28,7 @@ This is the **source** template. It is consumed two ways:
 - **Externally (your own repo):** the `create-grist-widget` CLI
   (`npm create grist-widget my-widget`) copies this template and rewrites the
   dependency to the published npm range (`^0.x`), so nothing points back at
-  this repo. See [Getting started](https://gristwidgets.com/docs/sdk/guide/getting-started).
+  this repo. See [Quickstart](https://gristwidgets.com/docs/quickstart).
 
 `pnpm-workspace.yaml` here only pre-approves esbuild's build script so a
 standalone `pnpm install` (pnpm 11) exits cleanly; inside the monorepo it's
