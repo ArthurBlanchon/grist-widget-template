@@ -62,16 +62,23 @@ jobs:
     env:
       REPO_NAME: ${{ github.event.repository.name }}
     steps:
+      # Action majors track the monorepo's own workflows (Dependabot watches
+      # this file via the template's directory in .github/dependabot.yml);
+      # the v4s here ran on the deprecated Node 20 action runtime.
       - name: Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@v7
 
       - name: Setup pnpm
-        uses: pnpm/action-setup@v4
+        uses: pnpm/action-setup@v6
 
       - name: Setup Node
-        uses: actions/setup-node@v4
+        uses: actions/setup-node@v7
         with:
           node-version: 22
+          # Never cache: a freshly scaffolded repo has no pnpm-lock.yaml (see
+          # the install step below), and a pnpm cache hard-requires one.
+          # Explicit rather than relying on setup-node's npm-only default.
+          package-manager-cache: false
 
       # Not --frozen-lockfile, and no `cache: pnpm` above: a freshly
       # scaffolded repo never has a committed pnpm-lock.yaml (the CLI's
@@ -171,12 +178,13 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout (default branch — for scripts/deploy.mjs)
-        uses: actions/checkout@v4
+        uses: actions/checkout@v7
 
       - name: Setup Node
-        uses: actions/setup-node@v4
+        uses: actions/setup-node@v7
         with:
           node-version: 22
+          package-manager-cache: false
 
       - name: Clone gh-pages into ./site (skip if it does not exist)
         id: clone
