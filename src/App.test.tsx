@@ -1,13 +1,12 @@
 /**
- * Mirrors `main.tsx`'s real wiring (`GristWidgetProvider` -> `GristBoundary`
- * -> the widget) without importing `main.tsx` itself, so this test exercises
- * the same gate logic the embedded widget actually runs under. See
- * `packages/core/tests/sdk/template-app.test.tsx` in the SDK repo for the
- * same pattern applied to a bare shell.
+ * Renders the widget the way `main.tsx` mounts it inside Grist
+ * (`GristWidgetApp`: provider, boundary gated on the mapped columns, alerts),
+ * against an emulated Grist, so this test exercises what the embedded widget
+ * actually runs under.
  */
 import "@testing-library/jest-dom/vitest"
 import { afterEach, describe, expect, it } from "vitest"
-import { GristBoundary, GristWidgetProvider } from "grist-widget-sdk"
+import { GristWidgetApp } from "grist-widget-sdk/app"
 import {
   act,
   actionsOf,
@@ -28,13 +27,7 @@ import App, { GRIST_OPTIONS } from "./App"
 afterEach(() => cleanup())
 
 function Wrapped() {
-  return (
-    <GristWidgetProvider options={GRIST_OPTIONS}>
-      <GristBoundary gate={GRIST_OPTIONS.columns?.length ? "canRender" : "ready"}>
-        <App />
-      </GristBoundary>
-    </GristWidgetProvider>
-  )
+  return <GristWidgetApp App={App} options={GRIST_OPTIONS} />
 }
 
 describe("App", () => {

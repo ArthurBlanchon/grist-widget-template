@@ -226,11 +226,11 @@ export function injectSelfReload(html, sha) {
 /**
  * Scan siteDir for previously-released v<version>/showcase-meta.json files
  * and assemble the versions.json manifest, newest first. Read by the
- * showcase hub (TemplateLanding) and per-channel notice (ChannelNotice) to
- * show this widget's own release history -- not the grist-widget-sdk
+ * release page grist-widget-sdk/app shows outside Grist (useReleasedVersions)
+ * to list this widget's own release history -- not the grist-widget-sdk
  * monorepo's (found live: every scaffolded widget's version index showed
- * the monorepo's versions instead of its own, since showcase-versions.ts
- * used to hardcode that URL). Entries whose meta has no `repo` field, or a
+ * the monorepo's versions instead of its own, since the template's version
+ * list used to hardcode that URL). Entries whose meta has no `repo` field, or a
  * `repo` that doesn't match this repo, are skipped -- a `gh-pages` branch
  * manually seeded from another repo's export (found live) would otherwise
  * leak that repo's own version history into this one's index.
