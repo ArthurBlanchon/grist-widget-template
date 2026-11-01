@@ -21,8 +21,8 @@ importers:
         specifier: ^2.1.1
         version: 2.1.1
       grist-widget-sdk:
-        specifier: ^0.3.26
-        version: 0.3.26(react-dom@19.3.1(react@19.3.1))(react@19.3.1)
+        specifier: ^0.3.27
+        version: 0.3.27(react-dom@19.3.1(react@19.3.1))(react@19.3.1)
       lucide-react:
         specifier: ^1.61.0
         version: 1.66.0(@types/react@19.3.0)(react@19.3.1)
@@ -69,6 +69,9 @@ importers:
       '@vitejs/plugin-react':
         specifier: ^6.1.2
         version: 6.1.2(vite@8.3.5(@types/node@26.6.6)(jiti@2.7.0))
+      create-grist-widget:
+        specifier: ^0.3.27
+        version: 0.3.27
       eslint:
         specifier: ^10.13.0
         version: 10.14.0(jiti@2.7.0)
@@ -261,6 +264,14 @@ packages:
 
   '@cacheable/utils@2.5.0':
     resolution: {integrity: sha512-buipgOVDkkPXNR5+xBpDw7Zk2n1EvU7qBJCNUcL7rhQ//kfpOXPAvQ511Os0vpLYJ1pZnvudNytkQt2hst3wqA==}
+
+  '@clack/core@1.5.1':
+    resolution: {integrity: sha512-iHTrHA8MtVuLl2TfZySmcKv1qO2PoyC9Z7pfSDozEuV5vtY3/wcOPKJXlqJ5Oq2Cx5DDGQGAMVx6HZfRRoVEbQ==}
+    engines: {node: '>= 20.12.0'}
+
+  '@clack/prompts@1.8.1':
+    resolution: {integrity: sha512-dlT1m5e/0yUL0kRNcQn7yGLVThkgbB0Ga/1AmfDDC/8ik6AIiSf2QLQO2zPYvefsHP0aFgxO93cVLCCfDp7kzQ==}
+    engines: {node: '>= 20.12.0'}
 
   '@csstools/color-helpers@6.1.2':
     resolution: {integrity: sha512-grhRy3OKmniaAEKXMjua5z/EODX0MSqBGjunw8+j/3HQjOnahs2AGhvEOIYVUWcU6ScApbhLhVrQTX8XqrMrow==}
@@ -1630,6 +1641,11 @@ packages:
   convert-source-map@2.0.0:
     resolution: {integrity: sha512-Kvp459HrV2FEJ1CAsi1Ku+MY3kasH19TFykTz2xWmMeq6bk2NU3XXvfJ+Q61m0xktWwt+1HSYf3JZsTms3aRJg==}
 
+  create-grist-widget@0.3.27:
+    resolution: {integrity: sha512-XpGHplD+AxWpM9zKxJcwMpbx4KVLS4ed5rdwqerZVJhhiqPMzOaBz6TWS/yzvNk4GABzuMko5X8IxGhXl22cZA==}
+    engines: {node: ^22.22.0 || >=24.15.0}
+    hasBin: true
+
   cross-spawn@7.0.6:
     resolution: {integrity: sha512-uV2QOWP2nWzsy2aMp8aRibhi9dlzF5Hgh5SHaB9OiTGEyDTiJJyx0uy51QXdyWbtAHNua4XJzUKca3OzKUd3vA==}
     engines: {node: '>= 8'}
@@ -1852,8 +1868,17 @@ packages:
   fast-levenshtein@2.0.6:
     resolution: {integrity: sha512-DCXu6Ifhqcks7TZKY3Hxp3y6qphY5SJZmrWMDrKcERSOXWQdMhU9Ig/PYrzyw/ul9jOIyh0N4M0tbC5hodg8dw==}
 
+  fast-string-truncated-width@3.0.3:
+    resolution: {integrity: sha512-0jjjIEL6+0jag3l2XWWizO64/aZVtpiGE3t0Zgqxv0DPuxiMjvB3M24fCyhZUO4KomJQPj3LTSUnDP3GpdwC0g==}
+
+  fast-string-width@3.0.2:
+    resolution: {integrity: sha512-gX8LrtNEI5hq8DVUfRQMbr5lpaS4nMIWV+7XEbXk2b8kiQIizgnlr12B4dA3ZEx3308ze0O4Q1R+cHts8kyUJg==}
+
   fast-uri@3.1.9:
     resolution: {integrity: sha512-hS/0Wt3Ya043oKXs0sIxrMpKQITXhMLIrVAKKXi4gozGC9v7YRWVnXIZzjNPTO02M9BdxLCWqK1yRXgNziVyJQ==}
+
+  fast-wrap-ansi@0.2.2:
+    resolution: {integrity: sha512-7F2Fl+TjRSenLqlU3UjSH0iyqopqoZIu7eZVpEirP2g1GtWa2G/ecEmBdgz31+Mxr+ELclgg6sokpSFIQiZ02Q==}
 
   fastq@1.20.3:
     resolution: {integrity: sha512-XKv5nnLs6nLF71NgiKJLIZFLkPyIEuOselLG7ujZnGrRfQK8HpvY+WqKhAJUAdLomwVHErVS4LfxFlPq0/FTAw==}
@@ -1946,8 +1971,8 @@ packages:
   grain-rpc@0.1.7:
     resolution: {integrity: sha512-ExN19s6e/VfiQQupb52uI9yIz2FWgL702yelYn3N4sS5/+jkDjC4MhLNJpfp8LxAdBIknJ3kTztzVz+PdRpBVg==}
 
-  grist-widget-sdk@0.3.26:
-    resolution: {integrity: sha512-w/mavxybqr2Hf/25wvq/CSh/lGFAjjU/lQzBzroWHlL5KaYsqyccTFr0HW1CdPlHx2kZ506ancBBbQCgVPsMFQ==}
+  grist-widget-sdk@0.3.27:
+    resolution: {integrity: sha512-KO4pynF693nuus5oJ1vVj09h4Fd66cZ6K8myEaS+CekJ6udjxnNB4laXe1wLvEb9V/0E7xuLPktMln5QxMwYCA==}
     engines: {node: '>=18'}
     peerDependencies:
       react: '>=18'
@@ -3284,6 +3309,18 @@ snapshots:
     dependencies:
       hashery: 1.5.1
       keyv: 5.6.0
+
+  '@clack/core@1.5.1':
+    dependencies:
+      fast-wrap-ansi: 0.2.2
+      sisteransi: 1.0.5
+
+  '@clack/prompts@1.8.1':
+    dependencies:
+      '@clack/core': 1.5.1
+      fast-string-width: 3.0.2
+      fast-wrap-ansi: 0.2.2
+      sisteransi: 1.0.5
 
   '@csstools/color-helpers@6.1.2': {}
 
@@ -4652,6 +4689,10 @@ snapshots:
 
   convert-source-map@2.0.0: {}
 
+  create-grist-widget@0.3.27:
+    dependencies:
+      '@clack/prompts': 1.8.1
+
   cross-spawn@7.0.6:
     dependencies:
       path-key: 3.1.1
@@ -4877,7 +4918,17 @@ snapshots:
 
   fast-levenshtein@2.0.6: {}
 
+  fast-string-truncated-width@3.0.3: {}
+
+  fast-string-width@3.0.2:
+    dependencies:
+      fast-string-truncated-width: 3.0.3
+
   fast-uri@3.1.9: {}
+
+  fast-wrap-ansi@0.2.2:
+    dependencies:
+      fast-string-width: 3.0.2
 
   fastq@1.20.3:
     dependencies:
@@ -4959,7 +5010,7 @@ snapshots:
       events: 1.1.1
       ts-interface-checker: 1.0.2
 
-  grist-widget-sdk@0.3.26(react-dom@19.3.1(react@19.3.1))(react@19.3.1):
+  grist-widget-sdk@0.3.27(react-dom@19.3.1(react@19.3.1))(react@19.3.1):
     dependencies:
       grain-rpc: 0.1.7
       react: 19.3.1
