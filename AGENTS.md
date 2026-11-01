@@ -68,6 +68,8 @@ rendering all live in `src/App.tsx` — that's the one file to edit.
 | ui primitives | `src/components/ui/` |
 | Deploy workflow | `.github/workflows/deploy.yml` |
 | Deploy script (version guard, channel logic) | `scripts/deploy.mjs` |
+| Pull request checks (lint, test, build) | `.github/workflows/ci.yml` |
+| Dependency update PRs (weekly, against the dev branch) | `.github/dependabot.yml` |
 | Full walkthrough (dev loop, deploying, embedding) | `README.md` |
 | Changelog | `CHANGELOG.md` |
 
@@ -92,3 +94,7 @@ Full detail, including the two live URLs (`/latest/` and `/v<version>/`): `READM
   template works (see above); `pnpm test` is the trusted local loop, real Grist via `/dev/`
   is the trusted real one
 - Merging `dev` into `main` without bumping `package.json`'s `version` first
+- Merging a Dependabot pull request whose `ci.yml` checks are red, or retargeting one at
+  `main`: updates go through `dev` like any other change. Template-file updates (this
+  pipeline, the build config) are applied by hand —
+  <https://gristwidgets.com/docs/cli/upgrading>
