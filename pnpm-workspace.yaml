@@ -7,5 +7,5 @@
 allowBuilds:
   esbuild: true
 minimumReleaseAgeExclude:
-  - create-grist-widget@0.3.27
+  - create-grist-widget@0.3.28
   - grist-widget-sdk@0.3.27

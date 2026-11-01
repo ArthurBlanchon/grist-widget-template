@@ -12,12 +12,14 @@ Opened outside a Grist iframe, the page is never a live preview of the widget it
 
 When actually embedded, the widget shows connection state only when something is wrong: until Grist is connected, or if the connection is lost or fails, `GristBoundary` replaces the widget with a connecting / unavailable / error screen (the error one with a retry button); once the widget is showing, the SDK's alerts report what needs attention (column mapping, access level, a failed write…) above it. Nothing is drawn over the widget while all is well. Pass your own `Alerts` component to `mountGristWidget()` to render them differently, or `Alerts: null` for none.
 
-`src/App.tsx` uses `useGrist<TaskRow, TaskMapped>()` for the selected row (`w.record`, `w.mode`) and remounts the UI with `key={rowKey}` when the row changes — same pattern as `widgets/create-email-draft`. It ships with two mapped columns (`title`, `done`) and an editable form that saves back via `w.table.update(...)`/`w.mapBack(...)` — the smallest real starting point, not a placeholder. See `src/grist-types.example.ts` for typing patterns.
+The widget lives in `src/app/`: `App.tsx`, and any components, hooks, helpers or assets it needs. `src/components/ui/` (shadcn primitives) and `src/index.css` (the theme) are yours too. `src/main.tsx`, the workflows and the Vite and ESLint config are the template's (`AGENTS.md` lists them): leave them as they are: `pnpm exec create-grist-widget upgrade`, run on `dev`, rewrites them when `create-grist-widget` is updated ([Upgrading a widget](https://gristwidgets.com/docs/cli/upgrading)).
+
+`src/app/App.tsx` uses `useGrist<TaskRow, TaskMapped>()` for the selected row (`w.record`, `w.mode`) and remounts the UI with `key={rowKey}` when the row changes. It ships with two mapped columns (`title`, `done`) and an editable form that saves back via `w.table.update(...)`/`w.mapBack(...)` — the smallest real starting point, not a placeholder. See `src/app/grist-types.example.ts` for typing patterns.
 
 - **ESLint** blocks direct `grist` global usage in `src/` — use the SDK only.
-- Edit `GRIST_OPTIONS.columns` in `App.tsx` to change the required columns (or remove the array entirely to read raw, unmapped records instead); `mountGristWidget()` gates the widget on `canRender` whenever columns are declared, so it renders once they're mapped.
+- Edit `GRIST_OPTIONS.columns` in `src/app/App.tsx` to change the required columns (or remove the array entirely to read raw, unmapped records instead); `mountGristWidget()` gates the widget on `canRender` whenever columns are declared, so it renders once they're mapped.
 
-Run `pnpm test`. `src/App.smoke.test.tsx` is the smoke test, one `smokeTestWidget()` call that checks the widget renders inside an emulated Grist with every declared column mapped, and that CI runs on every pull request; see `src/App.test.tsx` for the pattern (`renderWithGrist` + `presets` from `grist-widget-sdk/emulator/testing`, no browser or real Grist doc needed). Full guide: [Testing](https://gristwidgets.com/docs/emulator/testing).
+Run `pnpm test`. `src/app/App.smoke.test.tsx` is the smoke test, one `smokeTestWidget()` call that checks the widget renders inside an emulated Grist with every declared column mapped, and that CI runs on every pull request; see `src/app/App.test.tsx` for the pattern (`renderWithGrist` + `presets` from `grist-widget-sdk/emulator/testing`, no browser or real Grist doc needed). Full guide: [Testing](https://gristwidgets.com/docs/emulator/testing).
 
 **Monorepo dev:** this template resolves `grist-widget-sdk` from `packages/core/dist` (like the other widgets), not from SDK source. After changing the SDK, run `pnpm prebuild` or `pnpm --filter grist-widget-sdk build` before `pnpm dev`.
 
@@ -135,9 +137,10 @@ dependencies (`grist-widget-sdk` included) and the workflows' GitHub Actions,
 and `.github/workflows/ci.yml` lints, tests and builds every pull request.
 Merge a green one into `dev`, check `/dev/` inside Grist, then release it
 like any change (bump the version, merge `dev` into `main`). Changes to the
-template's own files (this pipeline, the build config) don't reach an
-existing widget that way: see
-[Upgrading a widget](https://gristwidgets.com/docs/cli/upgrading).
+template's own files (this pipeline, the build config) arrive with
+`create-grist-widget`'s updates: after merging one, run
+`pnpm exec create-grist-widget upgrade` on `dev` (see
+[Upgrading a widget](https://gristwidgets.com/docs/cli/upgrading)).
 
 **One-time setup** (the workflow can't do this part for you):
 

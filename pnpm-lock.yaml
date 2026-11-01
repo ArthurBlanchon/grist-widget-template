@@ -70,8 +70,8 @@ importers:
         specifier: ^6.1.2
         version: 6.1.2(vite@8.3.5(@types/node@26.6.6)(jiti@2.7.0))
       create-grist-widget:
-        specifier: ^0.3.27
-        version: 0.3.27
+        specifier: ^0.3.28
+        version: 0.3.28
       eslint:
         specifier: ^10.13.0
         version: 10.14.0(jiti@2.7.0)
@@ -1641,8 +1641,8 @@ packages:
   convert-source-map@2.0.0:
     resolution: {integrity: sha512-Kvp459HrV2FEJ1CAsi1Ku+MY3kasH19TFykTz2xWmMeq6bk2NU3XXvfJ+Q61m0xktWwt+1HSYf3JZsTms3aRJg==}
 
-  create-grist-widget@0.3.27:
-    resolution: {integrity: sha512-XpGHplD+AxWpM9zKxJcwMpbx4KVLS4ed5rdwqerZVJhhiqPMzOaBz6TWS/yzvNk4GABzuMko5X8IxGhXl22cZA==}
+  create-grist-widget@0.3.28:
+    resolution: {integrity: sha512-OZ7j+CrcLc7yCnkdHhq0TMhCi7JfxrJ4LEm/V1D4qLPeDDPJGdGWtL5ggt3nn8/jM5GyBhp/vZswbreaq4CVNA==}
     engines: {node: ^22.22.0 || >=24.15.0}
     hasBin: true
 
@@ -4689,7 +4689,7 @@ snapshots:
 
   convert-source-map@2.0.0: {}
 
-  create-grist-widget@0.3.27:
+  create-grist-widget@0.3.28:
     dependencies:
       '@clack/prompts': 1.8.1
 
