@@ -1,7 +1,7 @@
 import { mountGristWidget } from "grist-widget-sdk/app"
 
 import "./index.css"
-import App, { GRIST_OPTIONS } from "./App.tsx"
+import App, { GRIST_OPTIONS } from "./app/App.tsx"
 
 // Inside Grist: the widget, behind the SDK's connection screens and alerts,
 // in Grist's light/dark theme. Opened anywhere else (`pnpm dev`, a deployed

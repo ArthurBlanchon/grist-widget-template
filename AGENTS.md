@@ -11,21 +11,42 @@
 
 ## The widget contract
 
-`src/App.tsx` is the whole widget — one file, three exports:
+The widget lives in `src/app/`. Its entry point, `src/app/App.tsx`, has three exports:
 
 ```tsx
 export const GRIST_OPTIONS: UseGristOptions = { requiredAccess: "read table" }
 export const WIDGET_METADATA = { title: "...", description: "..." } as const
-export function App() {
+export default function App() {
   const w = useGrist()
   // ...
 }
 ```
 
+`GRIST_OPTIONS` may live in a file of its own, as long as `App.tsx` re-exports it: the
+template's `src/main.tsx` imports both from `./app/App`.
+
 `src/main.tsx` is one call, `mountGristWidget({ App, options: GRIST_OPTIONS, dev })` from
 `grist-widget-sdk/app`: inside Grist it renders `<App />` in `GristWidgetProvider` and
 `GristBoundary`, with the SDK's alerts and Grist's light/dark theme. Access level, column
-mapping, and rendering all live in `src/App.tsx` — that's the one file to edit.
+mapping, and rendering all live in `src/app/App.tsx` — that's the file to edit.
+
+### What is the template's, what is the widget's
+
+- **The template's:** `src/main.tsx`, `src/components/theme-provider.tsx`,
+  `src/lib/utils.ts`, `src/vite-env.d.ts`, the workflows and Dependabot config,
+  `vite.config.ts`, `tsconfig.json`, `eslint.config.js`, the Prettier config,
+  `components.json`, `CLAUDE.md` and this file.
+  Leave them as they are: `pnpm exec create-grist-widget upgrade` rewrites them to the
+  template of the `create-grist-widget` version the widget depends on
+  (<https://gristwidgets.com/docs/cli/upgrading>), and a local edit would be lost.
+- **The widget's:** everything else. `src/app/` holds its code and tests, the smoke test
+  included: put every new component, hook, helper and asset there. `src/components/ui/`
+  holds the shadcn primitives, where `shadcn add` writes (next to any other registry
+  folder it installs), and `src/index.css` the theme. `tsconfig.app.json` and
+  `tsconfig.node.json` keep the widget's own paths and types (their compiler settings come
+  from `grist-widget-sdk`). `README.md`, `index.html`, `public/` and
+  `pnpm-workspace.yaml` are the widget's too, and so is `package.json`, apart from the
+  scripts and dependency versions the template sets.
 
 ## Operating contract
 
@@ -37,7 +58,7 @@ mapping, and rendering all live in `src/App.tsx` — that's the one file to edit
    real Grist, so a fake local preview would teach the wrong lesson. Trust `pnpm test`
    (headless, real assertions) for local feedback, and the `dev`-branch loop below for real
    behavior — don't build or suggest a seeded `pnpm dev` preview.
-3. **Widget changes get a test.** `src/App.test.tsx` uses `renderWithGrist` + `presets` from
+3. **Widget changes get a test.** `src/app/App.test.tsx` uses `renderWithGrist` + `presets` from
    `grist-widget-sdk/emulator/testing` — no browser or real Grist doc needed. Run `pnpm test`.
 4. **Always develop on `dev`, release by merging to `main`.** Commit and push to `dev` for
    every change — it auto-deploys a live preview at `.../dev/` that self-reloads inside an
@@ -58,14 +79,16 @@ mapping, and rendering all live in `src/App.tsx` — that's the one file to edit
 | Format | `pnpm format` |
 | Type-check | `pnpm typecheck` |
 | Preview a production build | `pnpm preview` |
+| Bring the template's files up to date (on `dev`, after updating create-grist-widget) | `pnpm exec create-grist-widget upgrade` |
 
 ## Path map
 
 | Concept | Path |
 | --- | --- |
-| The widget | `src/App.tsx` |
-| Widget test (the pattern to copy for new tests) | `src/App.test.tsx` |
-| Smoke test (one smokeTestWidget call; CI runs it on SDK updates) | `src/App.smoke.test.tsx` |
+| The widget (everything in it is the widget's own) | `src/app/` |
+| Its entry point (GRIST_OPTIONS, WIDGET_METADATA, App) | `src/app/App.tsx` |
+| Widget test (the pattern to copy for new tests) | `src/app/App.test.tsx` |
+| Smoke test (one smokeTestWidget call; CI runs it on SDK updates) | `src/app/App.smoke.test.tsx` |
 | Grist wiring (mountGristWidget, inside vs. outside Grist) | `src/main.tsx` |
 | ui primitives | `src/components/ui/` |
 | Deploy workflow (runs grist-widget-deploy from the create-grist-widget devDependency: version guard, channel logic) | `.github/workflows/deploy.yml` |
@@ -95,10 +118,12 @@ Full detail, including the two live URLs (`/latest/` and `/v<version>/`): `READM
   template works (see above); `pnpm test` is the trusted local loop, real Grist via `/dev/`
   is the trusted real one
 - Merging `dev` into `main` without bumping `package.json`'s `version` first
+- Adding widget code outside `src/app/`, or editing the template's files to change the
+  widget (see the widget contract above)
 - Adding `minimumReleaseAgeExclude` entries to `pnpm-workspace.yaml` to get an install or a
   check green, or deleting the ones pnpm wrote for `grist-widget-sdk` and `create-grist-widget` on release day (see
   `README.md`): pnpm's 24 h age check protects the widget's supply chain
 - Merging a Dependabot pull request whose `ci.yml` checks are red, or retargeting one at
-  `main`: updates go through `dev` like any other change. Template-file updates (this
-  pipeline, the build config) are applied by hand —
+  `main`: updates go through `dev` like any other change, template-file updates
+  (`pnpm exec create-grist-widget upgrade`) included —
   <https://gristwidgets.com/docs/cli/upgrading>

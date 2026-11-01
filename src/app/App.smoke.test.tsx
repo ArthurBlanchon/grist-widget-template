@@ -6,7 +6,10 @@
  * and it improves with each SDK release. `.github/workflows/ci.yml` runs it
  * on every pull request, Dependabot's `grist-widget-sdk` updates included:
  * an SDK release that breaks this widget turns that PR red before the merge.
- * Widget-specific assertions go in their own tests (see `App.test.tsx`).
+ *
+ * It is the widget's own file: a widget using a browser API jsdom lacks
+ * (WebGL, say) stubs it here, with `vi.mock`. Widget-specific assertions go
+ * in their own tests (see `App.test.tsx`).
  */
 import { it } from "vitest"
 import { smokeTestWidget } from "grist-widget-sdk/emulator/testing"
