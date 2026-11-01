@@ -110,6 +110,17 @@ automatically.
 > permanently a no-op, so it's still safest to never manually re-seed
 > `gh-pages` again after that point.
 
+### Keeping it up to date
+
+`.github/dependabot.yml` opens weekly pull requests against `dev` for your
+dependencies (`grist-widget-sdk` included) and the workflows' GitHub Actions,
+and `.github/workflows/ci.yml` lints, tests and builds every pull request.
+Merge a green one into `dev`, check `/dev/` inside Grist, then release it
+like any change (bump the version, merge `dev` into `main`). Changes to the
+template's own files (this pipeline, the build config) don't reach an
+existing widget that way: see
+[Upgrading a widget](https://gristwidgets.com/docs/cli/upgrading).
+
 **One-time setup** (the workflow can't do this part for you):
 
 1. **Settings → Pages** → Source: "Deploy from a branch" → branch `gh-pages`
