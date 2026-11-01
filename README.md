@@ -38,9 +38,11 @@ This is the **source** template. It is consumed two ways:
 standalone `pnpm install` (pnpm 11) exits cleanly; inside the monorepo it's
 ignored (the root workspace governs).
 
-A scaffold's first commit includes `pnpm-lock.yaml` (unless it was made with
-`--no-install`): versions are pinned with their integrity hashes, CI installs
-exactly that, and Dependabot updates it. pnpm 11 won't install a version
+A scaffold's first commit includes `pnpm-lock.yaml`: the CLI installs with
+pnpm, even under `npm create`, unless it was run with `--no-install` or
+without pnpm installed. Versions are pinned with their integrity hashes, CI
+installs exactly that, and Dependabot updates it. A `package-lock.json` isn't
+used: the workflows install with pnpm. pnpm 11 won't install a version
 published less than 24 hours ago. So a widget scaffolded on the day of an SDK
 release also gets one `minimumReleaseAgeExclude` entry in
 `pnpm-workspace.yaml`, for that SDK version only, written by pnpm itself.
