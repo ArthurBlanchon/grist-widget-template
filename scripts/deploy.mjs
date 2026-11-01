@@ -39,11 +39,13 @@
 //     Regenerates versions.json (release runs only) and commits + pushes the
 //     gh-pages tree with a rebase-and-retry loop.
 //
-//   reset-branches [--repo-dir <dir>] [--repo <name>]
+//   reset-branches [--repo-dir <dir>] [--repo <name>] [--owner-repo <owner/name>]
 //     On a repo's first genuine release only (caller gates on plan()'s
 //     firstRelease): renames the four placeholder-identity spots (only if
 //     --repo is given and they still carry the template's own placeholder
-//     text -- a no-op for a CLI scaffold that already renamed itself), resets
+//     text -- a no-op for a CLI scaffold that already renamed itself), writes
+//     the /latest/ install URL into README.md's install-url block (owner/name
+//     from --owner-repo, else $GITHUB_REPOSITORY; a no-op without it), resets
 //     package.json's version to 0.0.1, prunes every branch except
 //     main/dev/gh-pages, and force-resets dev to main's current tip.
 
@@ -407,6 +409,40 @@ export function deriveIdentity(repoName) {
   return { packageName, title }
 }
 
+// README.md's install-URL block. awesome-grist-widgets only registers a
+// widget whose install URL its own repo states explicitly, so the first
+// release writes it there (docs/planning/2026-11-01-widget-lifecycle-plan.md,
+// R1). A README without these markers is left alone.
+const INSTALL_URL_START = "<!-- install-url:start -->"
+const INSTALL_URL_END = "<!-- install-url:end -->"
+
+/**
+ * The GitHub Pages URL of the `/latest/` channel for `owner/repo`, the same
+ * path plan() builds the release under. A `<owner>.github.io` repo is a
+ * user/org site, served at the domain root. A custom Pages domain isn't
+ * known here: edit the README line if the widget uses one.
+ */
+export function latestPagesUrl(ownerRepo) {
+  const [owner, repo] = String(ownerRepo || "").split("/")
+  if (!owner || !repo) return null
+  const host = `${owner.toLowerCase()}.github.io`
+  const base = repo.toLowerCase() === host ? `https://${host}/` : `https://${host}/${repo}/`
+  return `${base}latest/`
+}
+
+/** README text with its install-URL block set to `url`; unchanged without the markers. */
+export function withInstallUrl(readme, url) {
+  const start = readme.indexOf(INSTALL_URL_START)
+  const end = readme.indexOf(INSTALL_URL_END, start)
+  if (start < 0 || end < 0) return readme
+  const block = [
+    INSTALL_URL_START,
+    `**Install URL**, to paste into a Grist custom widget's URL field: <${url}>`,
+    INSTALL_URL_END,
+  ].join("\n")
+  return readme.slice(0, start) + block + readme.slice(end + INSTALL_URL_END.length)
+}
+
 /**
  * The same four placeholder-identity edits
  * `packages/create-grist-widget/bin/create-grist-widget.mjs` applies at
@@ -454,7 +490,12 @@ function identityEdits({ packageName, title }) {
  * a genuine release already published (firstRelease=false) and skips both
  * the release and this reset, so there's no loop.
  */
-export function resetBranchesIfFirstRelease(repoDir, repo, keep = ["main", "dev", "gh-pages"]) {
+export function resetBranchesIfFirstRelease(
+  repoDir,
+  repo,
+  keep = ["main", "dev", "gh-pages"],
+  ownerRepo = process.env.GITHUB_REPOSITORY,
+) {
   const changedFiles = new Set()
   const renamedFiles = []
 
@@ -473,6 +514,20 @@ export function resetBranchesIfFirstRelease(repoDir, repo, keep = ["main", "dev"
   }
   const identityReset = renamedFiles.length > 0
 
+  // The install URL, for registries and for whoever reads the README.
+  let installUrl = null
+  const readmePath = join(repoDir, "README.md")
+  const url = latestPagesUrl(ownerRepo)
+  if (url && existsSync(readmePath)) {
+    const before = readFileSync(readmePath, "utf8")
+    const after = withInstallUrl(before, url)
+    if (after !== before) {
+      writeFileSync(readmePath, after)
+      changedFiles.add("README.md")
+      installUrl = url
+    }
+  }
+
   let versionReset = false
   const pkgPath = join(repoDir, "package.json")
   if (existsSync(pkgPath)) {
@@ -490,6 +545,7 @@ export function resetBranchesIfFirstRelease(repoDir, repo, keep = ["main", "dev"
   if (changedFiles.size > 0) {
     const parts = []
     if (identityReset) parts.push("personalize scaffold")
+    if (installUrl) parts.push("write install URL")
     if (versionReset) parts.push("reset version to 0.0.1")
     git(["add", ...changedFiles], repoDir)
     git(
@@ -514,7 +570,7 @@ export function resetBranchesIfFirstRelease(repoDir, repo, keep = ["main", "dev"
     deletedBranches.push(b)
   }
   git(["push", "--force", "origin", "HEAD:refs/heads/dev"], repoDir)
-  return { deletedBranches, devReset: true, versionReset, identityReset, renamedFiles }
+  return { deletedBranches, devReset: true, versionReset, identityReset, renamedFiles, installUrl }
 }
 
 // ----------------------------------------------------------------------------
@@ -577,7 +633,12 @@ function main() {
       break
     }
     case "reset-branches": {
-      const res = resetBranchesIfFirstRelease(args["repo-dir"] || ".", args.repo)
+      const res = resetBranchesIfFirstRelease(
+        args["repo-dir"] || ".",
+        args.repo,
+        undefined,
+        args["owner-repo"] || process.env.GITHUB_REPOSITORY,
+      )
       console.log("reset-branches:", JSON.stringify(res))
       break
     }

@@ -3,7 +3,6 @@ import { createRoot } from "react-dom/client"
 import { GristBoundary, GristWidgetProvider } from "grist-widget-sdk"
 
 import { GristSdkAlerts } from "@/components/grist-sdk-alerts"
-import { GristStatusChip } from "@/components/grist-status-chip"
 import { LocalDevNotice } from "@/components/local-dev-notice"
 import { ReleaseInfo } from "@/components/release-info"
 import { ThemeProvider } from "@/components/theme-provider.tsx"
@@ -34,7 +33,6 @@ createRoot(document.getElementById("root")!).render(
     <ThemeProvider>
       {isEmbedded ? (
         <GristWidgetProvider options={GRIST_OPTIONS}>
-          <GristStatusChip />
           <GristBoundary
             gate={GRIST_OPTIONS.columns?.length ? "canRender" : "ready"}
           >

@@ -94,6 +94,9 @@ Full detail, including the two live URLs (`/latest/` and `/v<version>/`): `READM
   template works (see above); `pnpm test` is the trusted local loop, real Grist via `/dev/`
   is the trusted real one
 - Merging `dev` into `main` without bumping `package.json`'s `version` first
+- Adding `minimumReleaseAgeExclude` entries to `pnpm-workspace.yaml` to get an install or a
+  check green, or deleting the one pnpm wrote for `grist-widget-sdk` on release day (see
+  `README.md`): pnpm's 24 h age check protects the widget's supply chain
 - Merging a Dependabot pull request whose `ci.yml` checks are red, or retargeting one at
   `main`: updates go through `dev` like any other change. Template-file updates (this
   pipeline, the build config) are applied by hand —
