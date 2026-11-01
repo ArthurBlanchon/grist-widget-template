@@ -22,16 +22,17 @@ export function App() {
 }
 ```
 
-`src/main.tsx` wires it into Grist: `GristWidgetProvider` (reads `GRIST_OPTIONS`) →
-`GristBoundary` → `GristSdkAlerts` → `<App />`. Access level, column mapping, and
-rendering all live in `src/App.tsx` — that's the one file to edit.
+`src/main.tsx` is one call, `mountGristWidget({ App, options: GRIST_OPTIONS, dev })` from
+`grist-widget-sdk/app`: inside Grist it renders `<App />` in `GristWidgetProvider` and
+`GristBoundary`, with the SDK's alerts and Grist's light/dark theme. Access level, column
+mapping, and rendering all live in `src/App.tsx` — that's the one file to edit.
 
 ## Operating contract
 
 1. **Widgets use the SDK.** No direct `window.grist.*` calls — use `useGrist()` and the
    other `grist-widget-sdk` hooks.
 2. **`pnpm dev` is a bare shell, on purpose — not a seeded preview.** Opened outside Grist
-   it renders `LocalDevNotice`; the widget itself only renders once actually embedded in a
+   it shows the SDK's local-dev page; the widget itself only renders once actually embedded in a
    Grist document. This is deliberate, not a gap: an emulator can't guarantee parity with
    real Grist, so a fake local preview would teach the wrong lesson. Trust `pnpm test`
    (headless, real assertions) for local feedback, and the `dev`-branch loop below for real
@@ -64,7 +65,7 @@ rendering all live in `src/App.tsx` — that's the one file to edit.
 | --- | --- |
 | The widget | `src/App.tsx` |
 | Widget test (the pattern to copy for new tests) | `src/App.test.tsx` |
-| Grist wiring / embed vs. showcase detection | `src/main.tsx` |
+| Grist wiring (mountGristWidget, inside vs. outside Grist) | `src/main.tsx` |
 | ui primitives | `src/components/ui/` |
 | Deploy workflow | `.github/workflows/deploy.yml` |
 | Deploy script (version guard, channel logic) | `scripts/deploy.mjs` |
