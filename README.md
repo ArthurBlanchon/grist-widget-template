@@ -2,11 +2,15 @@
 
 Base template to build a Grist widget with `grist-widget-sdk`.
 
+<!-- install-url:start -->
+**Install URL**: written here by this widget's first release (its GitHub Pages `/latest/` URL).
+<!-- install-url:end -->
+
 `src/main.tsx` wraps the app with `GristWidgetProvider`, `GristBoundary`, and `GristSdkAlerts`. The latter maps `getGristSdkAlertDescriptors()` from the SDK to shadcn `Alert` (`src/components/grist-sdk-alerts.tsx` + `src/components/ui/alert.tsx`); keep them in sync with the playground when you change alert styling.
 
 Opened outside a Grist iframe, `main.tsx` picks between two components — never a live preview of the widget itself, since nothing here proves anything about real Grist behavior: local `pnpm dev` renders `LocalDevNotice`, a bare shell pointing at the real verification loop below (push to `dev`, open it in a real Grist document); any built/deployed URL (root, `/latest/`, `/dev/`, `/v<version>/` — all carrying the same build, see Deployment below) renders `ReleaseInfo` instead — which build this is, chips to jump to any other version/channel (hover one to see when it shipped; `src/lib/showcase-versions.ts`), and a copy-this-URL helper for pasting into Grist's custom widget field.
 
-When actually embedded, `GristStatusChip` (`src/components/grist-status-chip.tsx`) shows a small pill with live handshake status — connecting, retrying with a countdown, connected, or unavailable — using `useAmbientGristHandshake()` from `grist-widget-sdk/advanced`. It must be mounted *inside* `GristWidgetProvider` (see `src/main.tsx`): it only observes that provider's own handshake manager and never mounts a second one, so it's purely observational and can never duplicate or race the real handshake (see the [handshake API reference](https://gristwidgets.com/docs/sdk/api/handshake)).
+When actually embedded, the widget shows connection state only when something is wrong: until Grist is connected, or if the connection is lost or fails, `GristBoundary` replaces the widget with a connecting / unavailable / error screen (the error one with a retry button); once the widget is showing, `GristSdkAlerts` reports what needs attention (column mapping, access level, a failed write…). Nothing is drawn over the widget while all is well.
 
 `src/App.tsx` uses `useGrist<TaskRow, TaskMapped>()` for the selected row (`w.record`, `w.mode`) and remounts the UI with `key={rowKey}` when the row changes — same pattern as `widgets/create-email-draft`. It ships with two mapped columns (`title`, `done`) and an editable form that saves back via `w.table.update(...)`/`w.mapBack(...)` — the smallest real starting point, not a placeholder. See `src/grist-types.example.ts` for typing patterns.
 
@@ -33,6 +37,15 @@ This is the **source** template. It is consumed two ways:
 `pnpm-workspace.yaml` here only pre-approves esbuild's build script so a
 standalone `pnpm install` (pnpm 11) exits cleanly; inside the monorepo it's
 ignored (the root workspace governs).
+
+A scaffold's first commit includes `pnpm-lock.yaml` (unless it was made with
+`--no-install`): versions are pinned with their integrity hashes, CI installs
+exactly that, and Dependabot updates it. pnpm 11 won't install a version
+published less than 24 hours ago. So a widget scaffolded on the day of an SDK
+release also gets one `minimumReleaseAgeExclude` entry in
+`pnpm-workspace.yaml`, for that SDK version only, written by pnpm itself.
+Keep it: without it, every install (yours and CI's) rejects the lockfile
+until the version is a day old. After that the entry is harmless.
 
 ### Live preview
 
