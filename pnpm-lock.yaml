@@ -21,8 +21,8 @@ importers:
         specifier: ^2.1.1
         version: 2.1.1
       grist-widget-sdk:
-        specifier: ^0.3.20
-        version: 0.3.20(react-dom@19.3.1(react@19.3.1))(react@19.3.1)
+        specifier: ^0.3.25
+        version: 0.3.25(react-dom@19.3.1(react@19.3.1))(react@19.3.1)
       lucide-react:
         specifier: ^1.61.0
         version: 1.66.0(@types/react@19.3.0)(react@19.3.1)
@@ -1946,8 +1946,8 @@ packages:
   grain-rpc@0.1.7:
     resolution: {integrity: sha512-ExN19s6e/VfiQQupb52uI9yIz2FWgL702yelYn3N4sS5/+jkDjC4MhLNJpfp8LxAdBIknJ3kTztzVz+PdRpBVg==}
 
-  grist-widget-sdk@0.3.20:
-    resolution: {integrity: sha512-az5W7j9Fe0O0eo6jFisYY39TuCy/NxtRRPsYrnOHM0Ed4Bd707X+Wqmwb9FSbdQx0gZDkVnAU5iYmTerXOVJZQ==}
+  grist-widget-sdk@0.3.25:
+    resolution: {integrity: sha512-E4f2xzq2f+z+AcZXjVNiKwBk9RWJVsCXkPFPS1+JexUHEopDt3YBigUxMalfrn9MBgVkGAR0YlxoJ3OmmGTgvA==}
     engines: {node: '>=18'}
     peerDependencies:
       react: '>=18'
@@ -4959,7 +4959,7 @@ snapshots:
       events: 1.1.1
       ts-interface-checker: 1.0.2
 
-  grist-widget-sdk@0.3.20(react-dom@19.3.1(react@19.3.1))(react@19.3.1):
+  grist-widget-sdk@0.3.25(react-dom@19.3.1(react@19.3.1))(react@19.3.1):
     dependencies:
       grain-rpc: 0.1.7
       react: 19.3.1
