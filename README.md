@@ -17,7 +17,7 @@ When actually embedded, the widget shows connection state only when something is
 - **ESLint** blocks direct `grist` global usage in `src/` — use the SDK only.
 - Edit `GRIST_OPTIONS.columns` in `App.tsx` to change the required columns (or remove the array entirely to read raw, unmapped records instead); `mountGristWidget()` gates the widget on `canRender` whenever columns are declared, so it renders once they're mapped.
 
-Run `pnpm test` — see `src/App.test.tsx` for the pattern (`renderWithGrist` + `presets` from `grist-widget-sdk/emulator/testing`, no browser or real Grist doc needed). Full guide: [Testing](https://gristwidgets.com/docs/emulator/testing).
+Run `pnpm test`. `src/App.smoke.test.tsx` is the smoke test, one `smokeTestWidget()` call that checks the widget renders inside an emulated Grist with every declared column mapped, and that CI runs on every pull request; see `src/App.test.tsx` for the pattern (`renderWithGrist` + `presets` from `grist-widget-sdk/emulator/testing`, no browser or real Grist doc needed). Full guide: [Testing](https://gristwidgets.com/docs/emulator/testing).
 
 **Monorepo dev:** this template resolves `grist-widget-sdk` from `packages/core/dist` (like the other widgets), not from SDK source. After changing the SDK, run `pnpm prebuild` or `pnpm --filter grist-widget-sdk build` before `pnpm dev`.
 
@@ -43,11 +43,12 @@ pnpm, even under `npm create`, unless it was run with `--no-install` or
 without pnpm installed. Versions are pinned with their integrity hashes, CI
 installs exactly that, and Dependabot updates it. A `package-lock.json` isn't
 used: the workflows install with pnpm. pnpm 11 won't install a version
-published less than 24 hours ago. So a widget scaffolded on the day of an SDK
-release also gets one `minimumReleaseAgeExclude` entry in
-`pnpm-workspace.yaml`, for that SDK version only, written by pnpm itself.
-Keep it: without it, every install (yours and CI's) rejects the lockfile
-until the version is a day old. After that the entry is harmless.
+published less than 24 hours ago. So a widget scaffolded on the day of a
+release also gets `minimumReleaseAgeExclude` entries in `pnpm-workspace.yaml`,
+written by pnpm itself, for the `grist-widget-sdk` and `create-grist-widget`
+versions it was made with, and nothing else. Keep them: without them, every
+install (yours and CI's) rejects the lockfile until the version is a day old.
+After that the entries are harmless.
 
 ### Live preview
 
@@ -68,8 +69,10 @@ directory, same as `scripts/smoke/create-widget.sh` does.
 
 ## Deployment
 
-A bundled GitHub Actions workflow (`.github/workflows/deploy.yml` +
-`scripts/deploy.mjs`) publishes this widget to **your own** GitHub Pages.
+A bundled GitHub Actions workflow (`.github/workflows/deploy.yml`, which runs
+the `grist-widget-deploy` command of the `create-grist-widget` devDependency)
+publishes this widget to **your own** GitHub Pages. Fixes to the deploy logic
+arrive as updates of that devDependency.
 
 ### The workflow: always develop on `dev`, release by merging to `main`
 

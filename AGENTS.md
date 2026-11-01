@@ -65,10 +65,10 @@ mapping, and rendering all live in `src/App.tsx` — that's the one file to edit
 | --- | --- |
 | The widget | `src/App.tsx` |
 | Widget test (the pattern to copy for new tests) | `src/App.test.tsx` |
+| Smoke test (one smokeTestWidget call; CI runs it on SDK updates) | `src/App.smoke.test.tsx` |
 | Grist wiring (mountGristWidget, inside vs. outside Grist) | `src/main.tsx` |
 | ui primitives | `src/components/ui/` |
-| Deploy workflow | `.github/workflows/deploy.yml` |
-| Deploy script (version guard, channel logic) | `scripts/deploy.mjs` |
+| Deploy workflow (runs grist-widget-deploy from the create-grist-widget devDependency: version guard, channel logic) | `.github/workflows/deploy.yml` |
 | Pull request checks (lint, test, build) | `.github/workflows/ci.yml` |
 | Dependency update PRs (weekly, against the dev branch) | `.github/dependabot.yml` |
 | Full walkthrough (dev loop, deploying, embedding) | `README.md` |
@@ -96,7 +96,7 @@ Full detail, including the two live URLs (`/latest/` and `/v<version>/`): `READM
   is the trusted real one
 - Merging `dev` into `main` without bumping `package.json`'s `version` first
 - Adding `minimumReleaseAgeExclude` entries to `pnpm-workspace.yaml` to get an install or a
-  check green, or deleting the one pnpm wrote for `grist-widget-sdk` on release day (see
+  check green, or deleting the ones pnpm wrote for `grist-widget-sdk` and `create-grist-widget` on release day (see
   `README.md`): pnpm's 24 h age check protects the widget's supply chain
 - Merging a Dependabot pull request whose `ci.yml` checks are red, or retargeting one at
   `main`: updates go through `dev` like any other change. Template-file updates (this
