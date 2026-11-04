@@ -35,14 +35,15 @@ mapping, and rendering all live in `src/app/App.tsx` — that's the file to edit
 - **The template's:** `src/main.tsx`, `src/components/theme-provider.tsx`,
   `src/lib/utils.ts`, `src/vite-env.d.ts`, the workflows and Dependabot config,
   `vite.config.ts`, `tsconfig.json`, `eslint.config.js`, the Prettier config,
-  `components.json`, `CLAUDE.md` and this file.
+  `CLAUDE.md` and this file.
   Leave them as they are: `pnpm exec create-grist-widget upgrade` rewrites them to the
   template of the `create-grist-widget` version the widget depends on
   (<https://gristwidgets.com/docs/cli/upgrading>), and a local edit would be lost.
 - **The widget's:** everything else. `src/app/` holds its code and tests, the smoke test
   included: put every new component, hook, helper and asset there. `src/components/ui/`
   holds the shadcn primitives, where `shadcn add` writes (next to any other registry
-  folder it installs), and `src/index.css` the theme. `tsconfig.app.json` and
+  folder it installs), `src/index.css` the theme, and `components.json` shadcn's
+  configuration, registries included. `tsconfig.app.json` and
   `tsconfig.node.json` keep the widget's own paths and types (their compiler settings come
   from `grist-widget-sdk`). `README.md`, `index.html`, `public/` and
   `pnpm-workspace.yaml` are the widget's too, and so is `package.json`, apart from the
