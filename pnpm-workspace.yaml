@@ -6,6 +6,3 @@
 # pnpm-workspace.yaml governs there.
 allowBuilds:
   esbuild: true
-minimumReleaseAgeExclude:
-  - create-grist-widget@0.3.29
-  - grist-widget-sdk@0.3.27
