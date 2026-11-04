@@ -25,7 +25,7 @@ importers:
         version: 0.3.27(react-dom@19.3.1(react@19.3.1))(react@19.3.1)
       lucide-react:
         specifier: ^1.61.0
-        version: 1.66.0(@types/react@19.3.0)(react@19.3.1)
+        version: 1.67.0(@types/react@19.3.0)(react@19.3.1)
       radix-ui:
         specifier: ^1.8.1
         version: 1.8.1(@types/react-dom@19.3.0(@types/react@19.3.0))(@types/react@19.3.0)(react-dom@19.3.1(react@19.3.1))(react@19.3.1)
@@ -70,8 +70,8 @@ importers:
         specifier: ^6.1.2
         version: 6.2.1(vite@8.3.5(@types/node@26.6.6)(jiti@2.7.0))
       create-grist-widget:
-        specifier: ^0.3.29
-        version: 0.3.29
+        specifier: ^0.3.30
+        version: 0.3.30
       eslint:
         specifier: ^10.13.0
         version: 10.14.0(jiti@2.7.0)
@@ -1640,8 +1640,8 @@ packages:
   convert-source-map@2.0.0:
     resolution: {integrity: sha512-Kvp459HrV2FEJ1CAsi1Ku+MY3kasH19TFykTz2xWmMeq6bk2NU3XXvfJ+Q61m0xktWwt+1HSYf3JZsTms3aRJg==}
 
-  create-grist-widget@0.3.29:
-    resolution: {integrity: sha512-eqwMFAWh1diJwjkqeg9GaLsalkzmzRc2Jxul6sd7mtB8HlzL0c/fPeBF0aM9A4ZQT6Cb7Wu0zRkdXOtqX5ZYQQ==}
+  create-grist-widget@0.3.30:
+    resolution: {integrity: sha512-qRYWoleO2ew0bC63ekaaLi4zm+6gLnh3KQIsrUc1mTXF71L/LZj9M9YJLfiQAj+MeMHshLVJsYzBcueaSJQoxA==}
     engines: {node: ^22.22.0 || >=24.15.0}
     hasBin: true
 
@@ -2259,8 +2259,8 @@ packages:
   lru-cache@5.1.1:
     resolution: {integrity: sha512-KpNARQA3Iwv+jTA0utUVVbrh+Jlrr1Fv0e56GGzAFOXN7dk/FviaDW8LHmK52DlcH4WP2n6gI8vN1aesBFgo9w==}
 
-  lucide-react@1.66.0:
-    resolution: {integrity: sha512-8zjbi/Us+ETXqfBwmXF/FHrWGIqOdE6zT1yUdRJLQVoptomSkB0zdFWVIM667t9K8djWDaXdkBkqi2qVTuDNiw==}
+  lucide-react@1.67.0:
+    resolution: {integrity: sha512-z7kd21YNm/Gw3E7mTnq5dTuvV+yc+OEwA//oDENSG1SbZ/NVgKdjxALJFNdGoC0Ji7HaJR2Dha9ev7VUPxy9CQ==}
     peerDependencies:
       '@types/react': '*'
       react: ^16.5.1 || ^17.0.0 || ^18.0.0 || ^19.0.0
@@ -4611,7 +4611,7 @@ snapshots:
 
   convert-source-map@2.0.0: {}
 
-  create-grist-widget@0.3.29:
+  create-grist-widget@0.3.30:
     dependencies:
       '@clack/prompts': 1.8.1
 
@@ -5152,7 +5152,7 @@ snapshots:
     dependencies:
       yallist: 3.1.1
 
-  lucide-react@1.66.0(@types/react@19.3.0)(react@19.3.1):
+  lucide-react@1.67.0(@types/react@19.3.0)(react@19.3.1):
     dependencies:
       react: 19.3.1
     optionalDependencies:
