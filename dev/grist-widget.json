@@ -1,0 +1,35 @@
+{
+  "name": "Grist Widget Template",
+  "widgetId": "@arthurblanchon/grist-widget-template",
+  "url": "https://arthurblanchon.github.io/grist-widget-template/dev/",
+  "published": false,
+  "accessLevel": "full",
+  "columns": [
+    {
+      "name": "title",
+      "type": "Text"
+    },
+    {
+      "name": "done",
+      "type": "Bool"
+    }
+  ],
+  "renderAfterReady": false,
+  "description": "Edit the selected row's title and mark it done.",
+  "authors": [
+    {
+      "name": "ArthurBlanchon",
+      "url": "https://github.com/ArthurBlanchon"
+    }
+  ],
+  "lastUpdatedAt": "2026-11-07T15:05:27.280Z",
+  "gristWidgetSdk": {
+    "schema": 1,
+    "channel": "dev",
+    "version": "0.3.32",
+    "repository": "https://github.com/ArthurBlanchon/grist-widget-template",
+    "license": "MIT",
+    "sdk": "0.3.27",
+    "createGristWidget": "0.3.32"
+  }
+}
