@@ -76,7 +76,10 @@ directory, same as `scripts/smoke/create-widget.sh` does.
 A bundled GitHub Actions workflow (`.github/workflows/deploy.yml`, which runs
 the `grist-widget-deploy` command of the `create-grist-widget` devDependency)
 publishes this widget to **your own** GitHub Pages. Fixes to the deploy logic
-arrive as updates of that devDependency.
+arrive as updates of that devDependency. Next to the widget, every channel
+serves `grist-widget.json`, its Grist manifest: name, description, access
+level and columns, from `WIDGET_METADATA` and `GRIST_OPTIONS`, in the format a
+self-hosted Grist's widget list uses.
 
 ### The workflow: always develop on `dev`, release by merging to `main`
 
