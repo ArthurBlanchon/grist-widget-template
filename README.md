@@ -3,7 +3,7 @@
 Base template to build a Grist widget with `grist-widget-sdk`.
 
 <!-- install-url:start -->
-**Install URL**: written here by this widget's first release (its GitHub Pages `/latest/` URL).
+**Install URL**, to paste into a Grist custom widget's URL field: <https://arthurblanchon.github.io/grist-widget-template/latest/>
 <!-- install-url:end -->
 
 `src/main.tsx` is one call to `mountGristWidget()` from `grist-widget-sdk/app` ([reference](https://gristwidgets.com/docs/sdk/api/app)). Inside Grist it renders `App` in `GristWidgetProvider` and `GristBoundary`, under the SDK's alerts, in Grist's light/dark theme. `src/components/theme-provider.tsx` re-exports its `useTheme()`, for shadcn components that need the theme in JavaScript.
