@@ -23,6 +23,8 @@ Run `pnpm test`. `src/app/App.smoke.test.tsx` is the smoke test, one `smokeTestW
 
 To see the widget in a real Grist on your machine, run `pnpm demo` (it needs Docker). It starts the dev server and a Grist from a pinned Docker image, creates a document from `GRIST_OPTIONS` (a typed column per declared column, sample rows, every column mapped, the access the widget asks for), and prints the URL that opens it: no account, nothing leaves your machine, and edits reload in place. Ctrl-C stops both, and each run starts from a fresh document. It is real Grist, not an emulation, so it shows what `pnpm test` can't; the `dev` branch's `/dev/` preview remains the check in your own documents. `pnpm demo --port 9090` moves Grist off port 8484.
 
+`pnpm demo --save` writes the widget's demo page into `public/demo/`: the same document, opened by Grist running in the browser from static files. Commit it, and every deployed channel serves it next to the widget (`…/latest/demo/`): a link anyone can open, with no server and nothing saved. To change its data, open `public/demo/demo.grist` in any Grist, edit it, and download it back over the file.
+
 **Monorepo dev:** this template resolves `grist-widget-sdk` from `packages/core/dist` (like the other widgets), not from SDK source. After changing the SDK, run `pnpm prebuild` or `pnpm --filter grist-widget-sdk build` before `pnpm dev`.
 
 ## How this template is distributed
