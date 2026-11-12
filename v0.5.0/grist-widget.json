@@ -1,0 +1,36 @@
+{
+  "name": "Grist Widget Template",
+  "widgetId": "@arthurblanchon/grist-widget-template",
+  "url": "https://arthurblanchon.github.io/grist-widget-template/v0.5.0/",
+  "published": true,
+  "accessLevel": "full",
+  "columns": [
+    {
+      "name": "Title",
+      "type": "Text"
+    },
+    {
+      "name": "Done",
+      "type": "Bool"
+    }
+  ],
+  "renderAfterReady": false,
+  "description": "Mark the selected task done.",
+  "authors": [
+    {
+      "name": "ArthurBlanchon",
+      "url": "https://github.com/ArthurBlanchon"
+    }
+  ],
+  "lastUpdatedAt": "2026-11-12T19:57:11.008Z",
+  "gristWidgetSdk": {
+    "schema": 1,
+    "channel": "release",
+    "version": "0.5.0",
+    "repository": "https://github.com/ArthurBlanchon/grist-widget-template",
+    "license": "MIT",
+    "sdk": "0.5.0",
+    "createGristWidget": "0.5.0",
+    "demo": "https://arthurblanchon.github.io/grist-widget-template/v0.5.0/demo/"
+  }
+}
