@@ -6,24 +6,24 @@ Base template to build a Grist widget with `grist-widget-sdk`.
 **Install URL**, to paste into a Grist custom widget's URL field: <https://arthurblanchon.github.io/grist-widget-template/latest/>
 <!-- install-url:end -->
 
-`src/main.tsx` is one call to `mountGristWidget()` from `grist-widget-sdk/app` ([reference](https://gristwidgets.com/docs/sdk/api/app)). Inside Grist it renders `App` in `GristWidgetProvider` and `GristBoundary`, under the SDK's alerts, in Grist's light/dark theme. `src/components/theme-provider.tsx` re-exports its `useTheme()`, for shadcn components that need the theme in JavaScript.
+`src/main.tsx` is one call, `mountGristWidget(entry, { dev })` from `grist-widget-sdk/app` ([reference](https://gristwidgets.com/docs/sdk/api/app)), with `entry` the module `src/app/App.tsx`. Inside Grist it renders the widget in `GristWidgetProvider` and `GristBoundary`, under the SDK's alerts, in Grist's light/dark theme. `src/components/theme-provider.tsx` re-exports its `useTheme()`, for shadcn components that need the theme in JavaScript.
 
-Opened outside a Grist iframe, the page is never a live preview of the widget itself, since nothing there proves anything about real Grist behavior. Local `pnpm dev` shows a local-dev page pointing at the real verification loop below (push to `dev`, open it in a real Grist document). Any built or deployed URL (root, `/latest/`, `/dev/`, `/v<version>/`, all carrying the same build, see Deployment below) shows a release page instead: which build this is, links to every other version and channel (hover one to see when it shipped), and the URL to paste into Grist's custom widget field. Both come from the SDK and follow this widget's shadcn colors; `mountGristWidget()` takes your own components instead (`LocalDevPage`, `ReleasePage`).
+Opened outside a Grist iframe, the page is never a live preview of the widget itself, since nothing there proves anything about real Grist behavior. Local `pnpm dev` shows a local-dev page pointing at the real loops: **`/demo/index.html`** on the dev server opens the widget in real Grist, running in the browser from the demo page in `public/demo/` (see below), on the dev server's own build, so edits reload in place with no Docker; and the `dev` branch's `/dev/` in a real Grist document. Any built or deployed URL (root, `/latest/`, `/dev/`, `/v<version>/`, all carrying the same build, see Deployment below) shows a release page instead: which build this is, links to every other version and channel (hover one to see when it shipped), and the URL to paste into Grist's custom widget field. Both come from the SDK and follow this widget's shadcn colors; to use your own, export `LocalDevPage` or `ReleasePage` from `src/app/App.tsx`.
 
-When actually embedded, the widget shows connection state only when something is wrong: until Grist is connected, or if the connection is lost or fails, `GristBoundary` replaces the widget with a connecting / unavailable / error screen (the error one with a retry button); once the widget is showing, the SDK's alerts report what needs attention (column mapping, access level, a failed write…) above it. Nothing is drawn over the widget while all is well. Pass your own `Alerts` component to `mountGristWidget()` to render them differently, or `Alerts: null` for none.
+When actually embedded, the widget shows connection state only when something is wrong: until Grist is connected, or if the connection is lost or fails, `GristBoundary` replaces the widget with a connecting / unavailable / error screen (the error one with a retry button); once the widget is showing, the SDK's alerts report what needs attention (column mapping, access level, a failed write…) above it. Nothing is drawn over the widget while all is well. Export your own `Alerts` component from `src/app/App.tsx` to render them differently, or `export const Alerts = null` for none. Every customisation is an export of `src/app/App.tsx`, never an edit of `src/main.tsx`: `upgrade` refuses to run over a changed `src/main.tsx`.
 
 The widget lives in `src/app/`: `App.tsx`, and any components, hooks, helpers or assets it needs. `src/components/ui/` (shadcn primitives) and `src/index.css` (the theme) are yours too. `src/main.tsx`, the workflows and the Vite and ESLint config are the template's (`AGENTS.md` lists them): leave them as they are: `pnpm exec create-grist-widget upgrade`, run on `dev`, rewrites them when `create-grist-widget` is updated ([Upgrading a widget](https://gristwidgets.com/docs/cli/upgrading)).
 
-`src/app/App.tsx` uses `useGrist<TaskRow, TaskMapped>()` for the selected row (`w.record`, `w.mode`) and remounts the UI with `key={rowKey}` when the row changes. It ships with two mapped columns (`title`, `done`) and an editable form that saves back via `w.table.update(...)`/`w.mapBack(...)` — the smallest real starting point, not a placeholder. See `src/app/grist-types.example.ts` for typing patterns.
+`src/app/App.tsx` declares the widget with `defineGristWidget()`: the access it asks for, two columns to map (`Title`, `Done`) with their types, its title and description. `widget.useGrist()` is typed from that declaration, with no generics: `w.mappedRecord.Title` is a `string | null`, and `w.updateRecord({ Done: true })` writes to the selected row, encoded for the column's type. The smallest real starting point, not a placeholder.
 
 - **ESLint** blocks direct `grist` global usage in `src/` — use the SDK only.
-- Edit `GRIST_OPTIONS.columns` in `src/app/App.tsx` to change the required columns (or remove the array entirely to read raw, unmapped records instead); `mountGristWidget()` gates the widget on `canRender` whenever columns are declared, so it renders once they're mapped.
+- Edit the declaration's `columns` to change the required columns (or remove them to read raw, unmapped records instead). Until every required column is mapped, `GristBoundary` shows a "Map your columns" screen instead of the widget. Each mapped cell reaches `w.mappedRecord` as the value its declared type promises, or `null` when it doesn't match (listed in `w.cellIssues`): see [Typed reads](https://gristwidgets.com/docs/sdk/guide/typing).
 
-Run `pnpm test`. `src/app/App.smoke.test.tsx` is the smoke test, one `smokeTestWidget()` call that checks the widget renders inside an emulated Grist with every declared column mapped, and that CI runs on every pull request; see `src/app/App.test.tsx` for the pattern (`renderWithGrist` + `presets` from `grist-widget-sdk/emulator/testing`, no browser or real Grist doc needed). Full guide: [Testing](https://gristwidgets.com/docs/emulator/testing).
+Run `pnpm test`. `src/app/App.smoke.test.tsx` is the smoke test, one `smokeTestWidget(entry)` call that checks the widget renders inside an emulated Grist with every declared column mapped, and that CI runs on every pull request; see `src/app/App.test.tsx` for the pattern: `renderWithGrist(<App />, { widget, rows })` from `grist-widget-sdk/emulator/testing` runs the widget against its declared columns, mapped, with typed rows, no browser or real Grist doc needed. Full guide: [Testing](https://gristwidgets.com/docs/emulator/testing).
 
-To see the widget in a real Grist on your machine, run `pnpm demo` (it needs Docker). It starts the dev server and a Grist from a pinned Docker image, creates a document from `GRIST_OPTIONS` (a typed column per declared column, sample rows, every column mapped, the access the widget asks for), and prints the URL that opens it: no account, nothing leaves your machine, and edits reload in place. Ctrl-C stops both, and each run starts from a fresh document. It is real Grist, not an emulation, so it shows what `pnpm test` can't; the `dev` branch's `/dev/` preview remains the check in your own documents. `pnpm demo --port 9090` moves Grist off port 8484.
+To see the widget in a real Grist on your machine, run `pnpm demo` (it needs Docker). It starts the dev server and a Grist from a pinned Docker image, creates a document from the widget's declaration (a typed column per declared column, sample rows, every column mapped, the access the widget asks for), and prints the URL that opens it: no account, nothing leaves your machine, and edits reload in place. Ctrl-C stops both, and each run starts from a fresh document. It is real Grist, not an emulation, so it shows what `pnpm test` can't; the `dev` branch's `/dev/` preview remains the check in your own documents. `pnpm demo --port 9090` moves Grist off port 8484.
 
-`pnpm demo --save` writes the widget's demo page into `public/demo/`: the same document, opened by Grist running in the browser from static files. Commit it, and every deployed channel serves it next to the widget (`…/latest/demo/`): a link anyone can open, with no server and nothing saved. To change its data, open `public/demo/demo.grist` in any Grist, edit it, and download it back over the file.
+The template ships `public/demo/`, a demo page for its own widget; `pnpm demo --save` rewrites it for yours (do it once your columns differ): the same document as `pnpm demo`, opened by Grist running in the browser from static files. Commit it, and every deployed channel serves it next to the widget (`…/latest/demo/`): a link anyone can open, with no server and nothing saved. To change its data, open `public/demo/demo.grist` in any Grist, edit it, and download it back over the file.
 
 **Monorepo dev:** this template resolves `grist-widget-sdk` from `packages/core/dist` (like the other widgets), not from SDK source. After changing the SDK, run `pnpm prebuild` or `pnpm --filter grist-widget-sdk build` before `pnpm dev`.
 
@@ -80,7 +80,7 @@ the `grist-widget-deploy` command of the `create-grist-widget` devDependency)
 publishes this widget to **your own** GitHub Pages. Fixes to the deploy logic
 arrive as updates of that devDependency. Next to the widget, every channel
 serves `grist-widget.json`, its Grist manifest: name, description, access
-level and columns, from `WIDGET_METADATA` and `GRIST_OPTIONS`, in the format a
+level and columns, from the widget's declaration, in the format a
 self-hosted Grist's widget list uses.
 
 ### The workflow: always develop on `dev`, release by merging to `main`
@@ -181,8 +181,8 @@ template's own files (this pipeline, the build config) arrive with
    these rules can't tell it from you. They guarantee the outcome (nothing
    red reaches `main`), whoever merges.
 
-No manifest/widget-catalog file is generated — that's a multi-widget,
-Grist-widget-repository concept this single-widget template doesn't need.
-Paste your `/latest/` or `/v<version>/` URL directly into Grist's custom
-widget URL field.
+To use the widget, paste its `/latest/` or `/v<version>/` URL into Grist's
+custom widget URL field. A self-hosted Grist can also list it in its widget
+picker from the `grist-widget.json` each channel serves (see Deployment
+above).
 
