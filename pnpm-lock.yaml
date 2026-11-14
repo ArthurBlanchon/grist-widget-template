@@ -21,8 +21,8 @@ importers:
         specifier: ^2.1.1
         version: 2.1.1
       grist-widget-sdk:
-        specifier: ^0.6.0
-        version: 0.6.0(react-dom@19.3.1(react@19.3.1))(react@19.3.1)
+        specifier: ^0.6.1
+        version: 0.6.1(react-dom@19.3.1(react@19.3.1))(react@19.3.1)
       lucide-react:
         specifier: ^1.66.0
         version: 1.72.0(@types/react@19.3.0)(react@19.3.1)
@@ -70,8 +70,8 @@ importers:
         specifier: ^6.2.1
         version: 6.3.0(vite@8.3.8(@types/node@26.6.6)(jiti@2.7.0))
       create-grist-widget:
-        specifier: ^0.6.0
-        version: 0.6.0
+        specifier: ^0.6.1
+        version: 0.6.1
       eslint:
         specifier: ^10.13.0
         version: 10.14.0(jiti@2.7.0)
@@ -1664,8 +1664,8 @@ packages:
   convert-source-map@2.0.0:
     resolution: {integrity: sha512-Kvp459HrV2FEJ1CAsi1Ku+MY3kasH19TFykTz2xWmMeq6bk2NU3XXvfJ+Q61m0xktWwt+1HSYf3JZsTms3aRJg==}
 
-  create-grist-widget@0.6.0:
-    resolution: {integrity: sha512-KR1a2XuBlk89UEnbkq7XspweK2OeIvbRJ5fbfhns3EqAPJTQMLRdMSJ45TFPGOmJX4OWZCaI2s8pZ+2u5HgJFA==}
+  create-grist-widget@0.6.1:
+    resolution: {integrity: sha512-U/01+BdIfNUkMCM86ewDLV1wasxPrjS5kIzz4vSPOzU4m1lMuYfDVD0gn1V+DmNpAZLt6yriUMa8B3Sonh5wIw==}
     engines: {node: ^22.22.0 || >=24.15.0}
     hasBin: true
 
@@ -1857,10 +1857,6 @@ packages:
     resolution: {integrity: sha512-kVscqXk4OCp68SZ0dkgEKVi6/8ij300KBWTJq32P/dYeWTSwK41WyTxalN1eRmA5Z9UU/LX9D7FWSmV9SAYx6g==}
     engines: {node: '>=0.10.0'}
 
-  events@1.1.1:
-    resolution: {integrity: sha512-kEcvvCBByWXGnZy6JUlgAp2gBIUjfCAV6P6TgT1/aaQKcmuAEC4OZTV1I4EWQLz2gxZw76atuVyvHhTxvi0Flw==}
-    engines: {node: '>=0.4.x'}
-
   execa@5.1.1:
     resolution: {integrity: sha512-8uSpZZocAZRBAPIEINJj3Lo9HyGitllczc27Eh5YYojjMFMn8yHMDMaUHE2Jqfq05D/wucwI4JGURyXt1vchyg==}
     engines: {node: '>=10'}
@@ -1986,11 +1982,8 @@ packages:
   graceful-fs@4.2.12:
     resolution: {integrity: sha512-iuyGF2E4oafQfPsRrG2wtY2ILupMhvtdrhzrxB+0VcjsPpSPttpfYdjnGFGsTi5MaJFjI1jOKHPQ6UTbTj9TAw==}
 
-  grain-rpc@0.1.7:
-    resolution: {integrity: sha512-ExN19s6e/VfiQQupb52uI9yIz2FWgL702yelYn3N4sS5/+jkDjC4MhLNJpfp8LxAdBIknJ3kTztzVz+PdRpBVg==}
-
-  grist-widget-sdk@0.6.0:
-    resolution: {integrity: sha512-In0jBZWegcYUA6fv+aJvaF0xr2lGlxUNJ0gk5MVbr+fepd98Ieu+HQ+m9af4UIDA1zGFnyTDKixZn+OUI3Honw==}
+  grist-widget-sdk@0.6.1:
+    resolution: {integrity: sha512-YiZjc8M0k/PG/Xkqo0Xsv8N2xu1mOgMtlseECfKE2+D2nyJWRs1Xcm2oaHysmuSYr3nm/Qy9kZHdfN9HjN4vbQ==}
     engines: {node: '>=18'}
     peerDependencies:
       react: '>=18'
@@ -2786,9 +2779,6 @@ packages:
     engines: {node: '>=18.12'}
     peerDependencies:
       typescript: '>=4.8.4'
-
-  ts-interface-checker@1.0.2:
-    resolution: {integrity: sha512-4IKKvhZRXhvtYF/mtu+OCfBqJKV6LczUq4kQYcpT+iSB7++R9+giWnp2ecwWMIcnG16btVOkXFnoxLSYMN1Q1g==}
 
   ts-morph@26.0.0:
     resolution: {integrity: sha512-ztMO++owQnz8c/gIENcM9XfCEzgoGphTv+nKpYNM1bgsdOVC/jRZuEBf6N+mLLDNg68Kl+GgUZfOySaRiG1/Ug==}
@@ -4671,7 +4661,7 @@ snapshots:
 
   convert-source-map@2.0.0: {}
 
-  create-grist-widget@0.6.0:
+  create-grist-widget@0.6.1:
     dependencies:
       '@clack/prompts': 1.9.0
 
@@ -4853,8 +4843,6 @@ snapshots:
 
   esutils@2.0.3: {}
 
-  events@1.1.1: {}
-
   execa@5.1.1:
     dependencies:
       cross-spawn: 7.0.6
@@ -4985,14 +4973,8 @@ snapshots:
 
   graceful-fs@4.2.12: {}
 
-  grain-rpc@0.1.7:
+  grist-widget-sdk@0.6.1(react-dom@19.3.1(react@19.3.1))(react@19.3.1):
     dependencies:
-      events: 1.1.1
-      ts-interface-checker: 1.0.2
-
-  grist-widget-sdk@0.6.0(react-dom@19.3.1(react@19.3.1))(react@19.3.1):
-    dependencies:
-      grain-rpc: 0.1.7
       react: 19.3.1
       react-dom: 19.3.1(react@19.3.1)
       zod: 4.6.7
@@ -5695,8 +5677,6 @@ snapshots:
   ts-api-utils@2.5.0(typescript@6.0.3):
     dependencies:
       typescript: 6.0.3
-
-  ts-interface-checker@1.0.2: {}
 
   ts-morph@26.0.0:
     dependencies:
