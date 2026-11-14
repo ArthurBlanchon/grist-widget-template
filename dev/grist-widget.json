@@ -22,15 +22,15 @@
       "url": "https://github.com/ArthurBlanchon"
     }
   ],
-  "lastUpdatedAt": "2026-11-14T05:46:24.538Z",
+  "lastUpdatedAt": "2026-11-14T06:29:42.053Z",
   "gristWidgetSdk": {
     "schema": 1,
     "channel": "dev",
-    "version": "0.6.1",
+    "version": "0.6.2",
     "repository": "https://github.com/ArthurBlanchon/grist-widget-template",
     "license": "MIT",
-    "sdk": "0.6.1",
-    "createGristWidget": "0.6.1",
+    "sdk": "0.6.2",
+    "createGristWidget": "0.6.2",
     "demo": "https://arthurblanchon.github.io/grist-widget-template/dev/demo/"
   }
 }
