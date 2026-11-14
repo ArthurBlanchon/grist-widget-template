@@ -2731,8 +2731,8 @@ packages:
     resolution: {integrity: sha512-laJTa3Jb+VQpaC6DseHhF7dXVqHTfJPCRDaEbid/drOhgitgYku/letMUqOXFoWV0zIIUbjpdH2t+tYj4bQMRQ==}
     engines: {node: '>=8'}
 
-  systeminformation@5.33.20:
-    resolution: {integrity: sha512-8Cd5qcDjE8bHums5QhSbXo69qDC5sqKY9H6dZXq+nHIoN9cq9cjJrpasHRWq2vTp19acpgc7VlJP6gRoKvV+dA==}
+  systeminformation@5.33.21:
+    resolution: {integrity: sha512-bkG5ftzjV7XahdI5tTHReUeJYSJLxJOGU3QDFhTvJDBKgEOCDehcsVXYPW/NY60QqQYGv5OI+izJ6uGTVCpK2w==}
     engines: {node: '>=10.0.0'}
     os: [darwin, linux, win32, freebsd, openbsd, netbsd, sunos, android]
     hasBin: true
@@ -3307,7 +3307,7 @@ snapshots:
       object-treeify: 1.1.33
       open: 8.4.2
       picomatch: 4.0.7
-      systeminformation: 5.33.20
+      systeminformation: 5.33.21
       undici: 7.30.2
       which: 4.0.0
       yocto-spinner: 1.2.2
@@ -5655,7 +5655,7 @@ snapshots:
     dependencies:
       min-indent: 1.0.1
 
-  systeminformation@5.33.20: {}
+  systeminformation@5.33.21: {}
 
   tailwind-merge@3.7.0: {}
 
