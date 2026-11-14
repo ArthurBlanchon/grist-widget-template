@@ -1,7 +1,7 @@
 {
   "name": "Grist Widget Template",
   "widgetId": "@arthurblanchon/grist-widget-template",
-  "url": "https://arthurblanchon.github.io/grist-widget-template/v0.6.1/",
+  "url": "https://arthurblanchon.github.io/grist-widget-template/v0.6.2/",
   "published": true,
   "accessLevel": "full",
   "columns": [
@@ -22,15 +22,15 @@
       "url": "https://github.com/ArthurBlanchon"
     }
   ],
-  "lastUpdatedAt": "2026-11-14T05:47:05.127Z",
+  "lastUpdatedAt": "2026-11-14T06:30:33.378Z",
   "gristWidgetSdk": {
     "schema": 1,
     "channel": "release",
-    "version": "0.6.1",
+    "version": "0.6.2",
     "repository": "https://github.com/ArthurBlanchon/grist-widget-template",
     "license": "MIT",
-    "sdk": "0.6.1",
-    "createGristWidget": "0.6.1",
-    "demo": "https://arthurblanchon.github.io/grist-widget-template/v0.6.1/demo/"
+    "sdk": "0.6.2",
+    "createGristWidget": "0.6.2",
+    "demo": "https://arthurblanchon.github.io/grist-widget-template/v0.6.2/demo/"
   }
 }
