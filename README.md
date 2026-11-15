@@ -66,7 +66,7 @@ current source is external: `template-canary.yml` scaffolds it via the
 (pre-release preview) and directly to `main` (stable `@latest`, promotion is
 automatic) of
 [`grist-widget-template`](https://github.com/ArthurBlanchon/grist-widget-template)
-after every release — see https://gristwidgets.com/docs/contributing/releasing for the full
+after every release — see https://github.com/ArthurBlanchon/grist-widget-sdk/blob/main/docs/operations/releasing.md for the full
 mechanism. There is no live preview of *unreleased* changes to this
 template; to try one locally, scaffold from your working tree with
 `pnpm --filter create-grist-widget build` (embeds this template verbatim —
@@ -89,8 +89,10 @@ self-hosted Grist's widget list uses.
    Every push auto-deploys a live preview at `/dev/` that self-reloads
    inside an open Grist document a few seconds later — paste that URL into
    a Grist doc once, then just keep pushing while you iterate.
-2. Ready to publish a release? **Bump `package.json`'s `version`** as part
-   of your `dev` branch changes, then open a PR from `dev` into `main`.
+2. Ready to publish a release? On `dev`, run **`pnpm release minor`** (or
+   `patch`, or `major`): it bumps `package.json`'s `version`, writes the
+   `CHANGELOG.md` entry from what `dev` has that `main` doesn't, and commits.
+   Push, then open a PR from `dev` into `main` (the command prints its link).
 3. **Merge the PR.** This is the step that actually publishes — merging to
    `main` builds immutable `/v<version>/` and updates mutable `/latest/`.
 
@@ -166,16 +168,29 @@ template's own files (this pipeline, the build config) arrive with
    read-only, which would fail the push to `gh-pages` with a 403.
 3. If the repo is private, set **Pages visibility to Public** — a widget
    embeds inside a Grist iframe, which needs a publicly reachable URL.
-4. **After the first release**, protect the branches: Settings → Rules →
-   Rulesets → New branch ruleset. Not before: the first release itself
-   commits to `main` and resets `dev` (see above).
-   - `main`: **Require a pull request before merging**, **Require status
-     checks to pass** with the `check` status from `ci.yml`, **Block force
-     pushes**, **Restrict deletions**. A change then reaches `main` only
-     through a green pull request (your `dev` → `main` release PR included).
-   - `dev`: **Block force pushes** and **Restrict deletions**. Not the
-     pull-request rule: the version bump before a release is pushed straight
-     to `dev`.
+4. **After the first release**, protect the repository, with the
+   [GitHub CLI](https://cli.github.com) logged in (`gh auth login`). Not
+   before: the first release itself commits to `main` and resets `dev` (see
+   above).
+
+   ```bash
+   pnpm exec create-grist-widget protect --dry-run   # what it would change
+   pnpm exec create-grist-widget protect
+   ```
+
+   It creates the rulesets in `.github/rulesets/`, which a template copy
+   doesn't get, turns private vulnerability reporting on and checks Pages:
+   - `main`: a pull request and the `check` status from `ci.yml`, no force
+     push, no deletion. A change then reaches `main` only through a green
+     pull request (your `dev` → `main` release PR included).
+   - `dev`: no force push, no deletion. Not the pull-request rule: the version
+     bump before a release is pushed straight to `dev`.
+   - `tags`: no tag moved or deleted.
+
+   Each ruleset file can also be imported by hand: Settings → Rules →
+   Rulesets → New ruleset → Import a ruleset. Until they're in place, each
+   release warns in its run summary, and the first one opens an issue saying
+   so (the workflow's token can read rulesets, not create them).
 
    An AI agent working on this repo acts through your GitHub account, so
    these rules can't tell it from you. They guarantee the outcome (nothing
